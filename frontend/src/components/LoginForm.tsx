@@ -1,5 +1,8 @@
 import React, { useState } from "react";
 import { useAuth } from "../contexts/AuthContext";
+import { Card } from "../ui/components/Card";
+import { Input } from "../ui/components/Input";
+import { Button } from "../ui/components/Button";
 
 export const LoginForm: React.FC = () => {
   const { signIn } = useAuth();
@@ -22,39 +25,32 @@ export const LoginForm: React.FC = () => {
   };
 
   return (
-    <form
-      onSubmit={handleSubmit}
-      className="w-full max-w-sm bg-white p-6 rounded shadow"
-    >
-      <h2 className="text-xl font-semibold mb-4">Entrar</h2>
-      <label className="block mb-2">
-        <span className="text-sm">Email</span>
-        <input
+    <Card className="max-w-sm">
+      <form onSubmit={handleSubmit}>
+        <h2 className="text-xl font-semibold mb-4">Entrar</h2>
+        <Input
+          label="Email"
           type="email"
-          className="mt-1 block w-full p-2 border rounded"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
         />
-      </label>
-      <label className="block mb-4">
-        <span className="text-sm">Senha</span>
-        <input
-          type="password"
-          className="mt-1 block w-full p-2 border rounded"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-        />
-      </label>
-      {error && <div className="text-red-600 mb-2">{error}</div>}
-      <button
-        type="submit"
-        className="w-full py-2 rounded bg-blue-600 text-white"
-        disabled={loading}
-      >
-        {loading ? "Entrando..." : "Entrar com Firebase"}
-      </button>
-    </form>
+        <div className="mt-4">
+          <Input
+            label="Senha"
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+          />
+        </div>
+        {error && <div className="text-red-600 mb-2 mt-2">{error}</div>}
+        <div className="mt-4">
+          <Button type="submit" className="w-full" disabled={loading}>
+            {loading ? "Entrando..." : "Entrar"}
+          </Button>
+        </div>
+      </form>
+    </Card>
   );
 };
