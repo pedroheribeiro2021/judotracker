@@ -1,6 +1,8 @@
+// backend/src/index.ts
 import "dotenv/config";
 import { ApolloServer, gql } from "apollo-server";
 import { PrismaClient } from "@prisma/client";
+import { verifyFirebaseTokenAndGetUser } from "./auth/index";
 
 const prisma = new PrismaClient();
 
@@ -60,21 +62,35 @@ const typeDefs = gql`
 
 const resolvers = {
   Query: {
-    athletes: async () =>
-      prisma.athlete.findMany({
+    athletes: async (_: any, __: any, ctx: any) => {
+      // Exemplo de proteção simples: somente usuários autenticados podem listar atletas
+      if (!ctx.currentUser) {
+        throw new Error("Unauthorized");
+      }
+      return prisma.athlete.findMany({
         include: { user: true },
         orderBy: { createdAt: "desc" },
-      }),
+      });
+    },
 
-    athlete: async (_: any, { id }: { id: string }) =>
-      prisma.athlete.findUnique({ where: { id }, include: { user: true } }),
+    athlete: async (_: any, { id }: { id: string }, ctx: any) => {
+      if (!ctx.currentUser) throw new Error("Unauthorized");
+      return prisma.athlete.findUnique({
+        where: { id },
+        include: { user: true },
+      });
+    },
 
-    weighIns: async (_: any, { athleteId }: { athleteId: string }) => {
+    weighIns: async (
+      _: any,
+      { athleteId }: { athleteId: string },
+      ctx: any
+    ) => {
+      if (!ctx.currentUser) throw new Error("Unauthorized");
       const rows = await prisma.weighIn.findMany({
         where: { athleteId },
         orderBy: { recordedAt: "desc" },
       });
-      // converte Date -> ISO string para o campo string no schema
       return rows.map((r) => ({
         ...r,
         recordedAt: r.recordedAt.toISOString(),
@@ -83,7 +99,11 @@ const resolvers = {
   },
 
   Mutation: {
-    createAthlete: async (_: any, { input }: any) => {
+    createAthlete: async (_: any, { input }: any, ctx: any) => {
+      // Only coaches/admins might create athletes in real app, but for now require auth
+      if (!ctx.currentUser) throw new Error("Unauthorized");
+
+      // Optionally restrict by role: if ctx.currentUser.role !== 'COACH' && role !== 'ADMIN' throw
       const user = await prisma.user.create({
         data: { email: input.email, name: input.name ?? null, role: "ATHLETE" },
       });
@@ -99,7 +119,8 @@ const resolvers = {
       return athlete;
     },
 
-    recordWeighIn: async (_: any, { input }: any) => {
+    recordWeighIn: async (_: any, { input }: any, ctx: any) => {
+      if (!ctx.currentUser) throw new Error("Unauthorized");
       const wi = await prisma.weighIn.create({
         data: {
           athleteId: input.athleteId,
@@ -120,7 +141,16 @@ const resolvers = {
   },
 };
 
-const server = new ApolloServer({ typeDefs, resolvers });
+const server = new ApolloServer({
+  typeDefs,
+  resolvers,
+  context: async ({ req }) => {
+    // Extrai header Authorization
+    const authHeader = req.headers.authorization;
+    const currentUser = await verifyFirebaseTokenAndGetUser(authHeader);
+    return { prisma, currentUser };
+  },
+});
 
 server.listen({ port: 4000 }).then(({ url }) => {
   console.log(`🚀 GraphQL server running at ${url}`);

@@ -19,6 +19,7 @@ model User {
   name         String?
   role         Role     @default(ATHLETE)
   passwordHash String?
+  firebaseUid  String?  @unique
   createdAt    DateTime @default(now())
   athlete      Athlete?
   coach        Coach?
