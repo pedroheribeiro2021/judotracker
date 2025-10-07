@@ -1,0 +1,9 @@
+node_modules
+.env
+.env.example
+.env.local
+/dist
+/.vscode
+/.idea
+config/credentials/
+backend/keys/
