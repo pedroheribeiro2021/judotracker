@@ -124,7 +124,7 @@ const resolvers = {
         where: { athleteId },
         orderBy: { recordedAt: "desc" },
       });
-      return rows.map((r) => ({
+      return rows.map((r: { recordedAt: Date }) => ({
         ...r,
         recordedAt: r.recordedAt.toISOString(),
       }));
@@ -263,8 +263,17 @@ const server = new ApolloServer({
     const currentUser = await verifyFirebaseTokenAndGetUser(authHeader);
     return { prisma, currentUser };
   },
+  cors: {
+    origin: true,
+    credentials: true,
+  },
 });
 
-server.listen({ port: 4000 }).then(({ url }) => {
+server
+  .listen({
+    port: Number(process.env.PORT) || 4000,
+    path: "/graphql",
+  })
+  .then(({ url }) => {
   console.log(`🚀 GraphQL server running at ${url}`);
 });

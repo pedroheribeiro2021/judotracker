@@ -1,6 +1,27 @@
 // backend/src/firebase/admin.ts
 import admin from "firebase-admin";
-import fs from "fs";
+
+function parseServiceAccountFromEnv(value: string, label: string) {
+  const trimmed = value.trim();
+
+  // Caso comum em providers: colar o JSON diretamente na env var
+  if (trimmed.startsWith("{")) {
+    return JSON.parse(trimmed);
+  }
+
+  // Caso base64 (ou base64url) do JSON
+  const normalizedB64 = trimmed.replace(/\s+/g, "").replace(/-/g, "+").replace(/_/g, "/");
+  const decoded = Buffer.from(normalizedB64, "base64").toString("utf8").trim();
+
+  if (!decoded.startsWith("{")) {
+    throw new Error(
+      `${label} does not look like JSON (direct) or base64(JSON). ` +
+        `Decoded value starts with: ${JSON.stringify(decoded.slice(0, 20))}`
+    );
+  }
+
+  return JSON.parse(decoded);
+}
 
 function initFirebaseAdmin() {
   // Se GOOGLE_APPLICATION_CREDENTIALS estiver definido, o admin SDK o usará automaticamente.
@@ -31,15 +52,20 @@ function initFirebaseAdmin() {
 
   if (raw) {
     try {
-      serviceAccount = typeof raw === "string" ? JSON.parse(raw) : raw;
+      serviceAccount =
+        typeof raw === "string"
+          ? parseServiceAccountFromEnv(raw, "FIREBASE_SERVICE_ACCOUNT")
+          : raw;
     } catch (err) {
       console.error("Failed to parse FIREBASE_SERVICE_ACCOUNT JSON:", err);
       throw err;
     }
   } else if (rawB64) {
     try {
-      const decoded = Buffer.from(rawB64, "base64").toString("utf8");
-      serviceAccount = JSON.parse(decoded);
+      serviceAccount = parseServiceAccountFromEnv(
+        rawB64,
+        "FIREBASE_SERVICE_ACCOUNT_B64"
+      );
     } catch (err) {
       console.error("Failed to parse FIREBASE_SERVICE_ACCOUNT_B64:", err);
       throw err;
