@@ -92,7 +92,7 @@ const resolvers = {
   Query: {
     athletes: async (_: any, __: any, ctx: any) => {
       if (!ctx.currentUser) {
-        throw new Error("Unauthorized");
+        throw new Error("UNAUTHENTICATED");
       }
       return prisma.athlete.findMany({
         include: {
@@ -104,7 +104,7 @@ const resolvers = {
     },
 
     athlete: async (_: any, { id }: { id: string }, ctx: any) => {
-      if (!ctx.currentUser) throw new Error("Unauthorized");
+      if (!ctx.currentUser) throw new Error("UNAUTHENTICATED");
       return prisma.athlete.findUnique({
         where: { id },
         include: {
@@ -119,7 +119,7 @@ const resolvers = {
       { athleteId }: { athleteId: string },
       ctx: any
     ) => {
-      if (!ctx.currentUser) throw new Error("Unauthorized");
+      if (!ctx.currentUser) throw new Error("UNAUTHENTICATED");
       const rows = await prisma.weighIn.findMany({
         where: { athleteId },
         orderBy: { recordedAt: "desc" },
@@ -144,7 +144,7 @@ const resolvers = {
 
   Mutation: {
     createAthlete: async (_: any, { input }: any, ctx: any) => {
-      if (!ctx.currentUser) throw new Error("Unauthorized");
+      if (!ctx.currentUser) throw new Error("UNAUTHENTICATED");
 
       const user = await prisma.user.create({
         data: { email: input.email, name: input.name ?? null, role: "ATHLETE" },
@@ -167,7 +167,7 @@ const resolvers = {
     },
 
     recordWeighIn: async (_: any, { input }: any, ctx: any) => {
-      if (!ctx.currentUser) throw new Error("Unauthorized");
+      if (!ctx.currentUser) throw new Error("UNAUTHENTICATED");
       const wi = await prisma.weighIn.create({
         data: {
           athleteId: input.athleteId,
@@ -261,6 +261,11 @@ const server = new ApolloServer({
   context: async ({ req }) => {
     const authHeader = req.headers.authorization;
     const currentUser = await verifyFirebaseTokenAndGetUser(authHeader);
+    if (!authHeader) {
+      console.warn("Missing Authorization header");
+    } else if (!currentUser) {
+      console.warn("Invalid/expired Firebase token");
+    }
     return { prisma, currentUser };
   },
   cors: {
