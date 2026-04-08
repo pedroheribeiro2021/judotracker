@@ -5,6 +5,19 @@ import { ApolloError } from "apollo-server";
 
 const prisma = new PrismaClient();
 
+function decodeJwtPayloadUnsafe(token: string): Record<string, unknown> | null {
+  try {
+    const parts = token.split(".");
+    if (parts.length < 2) return null;
+    const b64 = parts[1].replace(/-/g, "+").replace(/_/g, "/");
+    const pad = b64.length % 4;
+    const padded = pad ? b64 + "=".repeat(4 - pad) : b64;
+    return JSON.parse(Buffer.from(padded, "base64").toString("utf8"));
+  } catch {
+    return null;
+  }
+}
+
 export type CurrentUser = {
   uid: string; // firebase uid
   email?: string | null;
@@ -60,19 +73,13 @@ export async function verifyFirebaseTokenAndGetUser(
       id: null,
     };
   } catch (err: any) {
-    // Tenta extrair infos não sensíveis do JWT para diagnosticar mismatch de projeto
-    try {
-      const parts = token.split(".");
-      if (parts.length >= 2) {
-        const payloadJson = Buffer.from(parts[1], "base64").toString("utf8");
-        const payload = JSON.parse(payloadJson);
-        const iss = payload?.iss;
-        const aud = payload?.aud;
-        const sub = payload?.sub;
-        console.warn("Firebase token rejected (jwt payload):", { iss, aud, sub });
-      }
-    } catch {
-      // ignore diagnostic decode errors
+    const payload = decodeJwtPayloadUnsafe(token);
+    if (payload) {
+      console.warn("Firebase token rejected (jwt payload):", {
+        iss: payload.iss,
+        aud: payload.aud,
+        sub: payload.sub,
+      });
     }
     // token invalid/expired
     // do not leak internal details

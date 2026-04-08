@@ -1,6 +1,6 @@
 // backend/src/index.ts
 import "dotenv/config";
-import { ApolloServer, gql } from "apollo-server";
+import { ApolloServer, gql, AuthenticationError } from "apollo-server";
 import { PrismaClient } from "@prisma/client";
 import { verifyFirebaseTokenAndGetUser } from "./auth/index";
 
@@ -92,7 +92,7 @@ const resolvers = {
   Query: {
     athletes: async (_: any, __: any, ctx: any) => {
       if (!ctx.currentUser) {
-        throw new Error("UNAUTHENTICATED");
+        throw new AuthenticationError("Not authenticated");
       }
       return prisma.athlete.findMany({
         include: {
@@ -104,7 +104,7 @@ const resolvers = {
     },
 
     athlete: async (_: any, { id }: { id: string }, ctx: any) => {
-      if (!ctx.currentUser) throw new Error("UNAUTHENTICATED");
+      if (!ctx.currentUser) throw new AuthenticationError("Not authenticated");
       return prisma.athlete.findUnique({
         where: { id },
         include: {
@@ -119,7 +119,7 @@ const resolvers = {
       { athleteId }: { athleteId: string },
       ctx: any
     ) => {
-      if (!ctx.currentUser) throw new Error("UNAUTHENTICATED");
+      if (!ctx.currentUser) throw new AuthenticationError("Not authenticated");
       const rows = await prisma.weighIn.findMany({
         where: { athleteId },
         orderBy: { recordedAt: "desc" },
@@ -144,7 +144,7 @@ const resolvers = {
 
   Mutation: {
     createAthlete: async (_: any, { input }: any, ctx: any) => {
-      if (!ctx.currentUser) throw new Error("UNAUTHENTICATED");
+      if (!ctx.currentUser) throw new AuthenticationError("Not authenticated");
 
       const user = await prisma.user.create({
         data: { email: input.email, name: input.name ?? null, role: "ATHLETE" },
@@ -167,7 +167,7 @@ const resolvers = {
     },
 
     recordWeighIn: async (_: any, { input }: any, ctx: any) => {
-      if (!ctx.currentUser) throw new Error("UNAUTHENTICATED");
+      if (!ctx.currentUser) throw new AuthenticationError("Not authenticated");
       const wi = await prisma.weighIn.create({
         data: {
           athleteId: input.athleteId,
@@ -259,6 +259,10 @@ const server = new ApolloServer({
   typeDefs,
   resolvers,
   context: async ({ req }) => {
+    // Preflight CORS (OPTIONS) não envia Authorization — não tratar como falta de login
+    if (req.method === "OPTIONS") {
+      return { prisma, currentUser: null };
+    }
     const authHeader = req.headers.authorization;
     const currentUser = await verifyFirebaseTokenAndGetUser(authHeader);
     if (!authHeader) {
