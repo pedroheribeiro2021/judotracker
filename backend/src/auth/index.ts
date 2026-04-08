@@ -60,6 +60,20 @@ export async function verifyFirebaseTokenAndGetUser(
       id: null,
     };
   } catch (err: any) {
+    // Tenta extrair infos não sensíveis do JWT para diagnosticar mismatch de projeto
+    try {
+      const parts = token.split(".");
+      if (parts.length >= 2) {
+        const payloadJson = Buffer.from(parts[1], "base64").toString("utf8");
+        const payload = JSON.parse(payloadJson);
+        const iss = payload?.iss;
+        const aud = payload?.aud;
+        const sub = payload?.sub;
+        console.warn("Firebase token rejected (jwt payload):", { iss, aud, sub });
+      }
+    } catch {
+      // ignore diagnostic decode errors
+    }
     // token invalid/expired
     // do not leak internal details
     console.warn("Firebase token verification failed:", err?.message ?? err);
