@@ -10,5 +10,11 @@ const firebaseConfig = {
   appId: import.meta.env.VITE_FIREBASE_APP_ID
 };
 
+if (!firebaseConfig.apiKey?.trim()) {
+  throw new Error(
+    "Firebase: falta VITE_FIREBASE_API_KEY. Cria/edita frontend/.env com as chaves do Firebase Console e reinicia o Vite (npm run dev)."
+  );
+}
+
 const app = initializeApp(firebaseConfig as any);
 export const auth = getAuth(app);
