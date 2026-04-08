@@ -9,23 +9,56 @@ import { CREATE_ATHLETE, GET_ATHLETES, GET_COACHES } from "../graphql/queries";
 import { Button } from "../ui";
 import { Input } from "../ui";
 
+type FormData = {
+  email: string;
+  name?: string;
+  dob?: string;
+  heightCm?: number | null;
+  defaultWeightKg?: number | null;
+  coachId?: string | null;
+};
+
 // schema keeps dob as optional string (we'll parse it manually)
-const schema = z.object({
+const schema: z.ZodType<FormData, any, any> = z.object({
   email: z.string().email(),
   name: z.string().min(2).optional(),
   dob: z.string().optional(), // we'll accept 'DD/MM/YYYY' or empty
   heightCm: z
-    .union([z.number().positive(), z.undefined(), z.null()])
+    .any()
     .optional()
-    .nullable(),
+    .transform((v) => {
+      if (v == null) return undefined;
+      if (typeof v === "number" && Number.isNaN(v)) return undefined;
+      const n = typeof v === "string" ? Number(v) : v;
+      if (typeof n !== "number" || Number.isNaN(n)) return undefined;
+      if (n <= 0) return undefined;
+      return n;
+    }),
   defaultWeightKg: z
-    .union([z.number().positive(), z.undefined(), z.null()])
+    .any()
     .optional()
-    .nullable(),
-  coachId: z.string().uuid().optional().nullable(),
+    .transform((v) => {
+      if (v == null) return undefined;
+      if (typeof v === "number" && Number.isNaN(v)) return undefined;
+      const n = typeof v === "string" ? Number(v) : v;
+      if (typeof n !== "number" || Number.isNaN(n)) return undefined;
+      if (n <= 0) return undefined;
+      return n;
+    }),
+  coachId: z
+    .any()
+    .optional()
+    .transform((v) => {
+      if (v == null) return undefined;
+      if (typeof v !== "string") return undefined;
+      const trimmed = v.trim();
+      if (!trimmed) return null;
+      return trimmed;
+    })
+    .refine((v) => v == null || /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(v), {
+      message: "Treinador inválido.",
+    }),
 });
-
-type FormData = z.infer<typeof schema>;
 
 /** parse date in DD/MM/YYYY -> returns ISO 'YYYY-MM-DD' or null if invalid */
 function parseDateBRtoISO(value?: string | null): string | null {
@@ -178,6 +211,11 @@ const CreateAthleteForm: React.FC<{ onSuccess?: () => void }> = ({
             </option>
           ))}
         </select>
+        {errors.coachId?.message && (
+          <span className="text-sm text-red-600 mt-1 block">
+            {errors.coachId.message as string}
+          </span>
+        )}
       </label>
 
       <div>
