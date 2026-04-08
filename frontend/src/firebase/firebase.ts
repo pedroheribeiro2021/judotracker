@@ -1,5 +1,5 @@
 import { initializeApp } from 'firebase/app';
-import { getAuth } from 'firebase/auth';
+import { getAuth, onAuthStateChanged, type User } from 'firebase/auth';
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -18,3 +18,12 @@ if (!firebaseConfig.apiKey?.trim()) {
 
 const app = initializeApp(firebaseConfig as any);
 export const auth = getAuth(app);
+
+// Resolve uma vez quando o Firebase terminar de hidratar o estado de auth.
+// Evita requests GraphQL iniciais sem Authorization header.
+export const authReady: Promise<User | null> = new Promise((resolve) => {
+  const unsub = onAuthStateChanged(auth, (user) => {
+    unsub();
+    resolve(user);
+  });
+});
