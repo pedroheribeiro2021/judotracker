@@ -10,6 +10,10 @@ import { Card } from "../ui";
 import { Button } from "../ui";
 import toast from "react-hot-toast";
 import { differenceInYears } from "date-fns";
+import { Modal } from "../ui/components/Modal";
+import { parseISO } from "date-fns/parseISO";
+import WeightChart from "../components/WeightChart";
+import CreateCoachForm from "../components/CreateCoachForm";
 
 export const Dashboard: React.FC = () => {
   const { data, loading, error } = useQuery(GET_ATHLETES, {
@@ -17,18 +21,15 @@ export const Dashboard: React.FC = () => {
   });
   const { user, signOut } = useAuth();
 
-  // modal states
   const [openCreateAthlete, setOpenCreateAthlete] = useState(false);
   const [openRecordWeigh, setOpenRecordWeigh] = useState(false);
-
-  // athlete detail modal
+  const [openCreateCoach, setOpenCreateCoach] = useState(false);
   const [selectedAthleteId, setSelectedAthleteId] = useState<string | null>(
-    null
+    null,
   );
   const [openAthleteDetail, setOpenAthleteDetail] = useState(false);
-
-  // search filter (client-side)
   const [q, setQ] = useState("");
+
   const athletes = data?.athletes ?? [];
 
   const filtered = useMemo(() => {
@@ -41,37 +42,19 @@ export const Dashboard: React.FC = () => {
     });
   }, [athletes, q]);
 
-  /**
-   * computeAge
-   * Recebe dobValue que pode ser:
-   *  - null/undefined
-   *  - string ISO "YYYY-MM-DD" ou "YYYY-MM-DDTHH:MM:SSZ"
-   *  - número (timestamp em ms)
-   *  - string numérica representando timestamp
-   * Retorna: número de anos (integer) ou '-' se não puder calcular.
-   */
   const computeAge = (dobValue?: string | number | null) => {
-    // debugging (remova depois)
-    // console.log('Computing age for dobValue:', dobValue);
-
     if (dobValue == null) return "-";
-
     try {
       let parsed: Date | null = null;
-
       if (typeof dobValue === "number") {
         parsed = new Date(dobValue);
       } else if (typeof dobValue === "string") {
-        // numeric string? (timestamp)
         if (/^\d+$/.test(dobValue)) {
           parsed = new Date(Number(dobValue));
         } else {
-          // try parse ISO or YYYY-MM-DD
-          // parseISO lida com YYYY-MM-DD e ISO strings
           try {
             parsed = parseISO(dobValue);
             if (isNaN(parsed.getTime())) {
-              // fallback: try Date constructor
               const alt = new Date(dobValue);
               parsed = isNaN(alt.getTime()) ? null : alt;
             }
@@ -81,18 +64,13 @@ export const Dashboard: React.FC = () => {
           }
         }
       }
-
       if (!parsed || isNaN(parsed.getTime())) return "-";
-
-      const years = differenceInYears(new Date(), parsed);
-      return years;
-    } catch (err) {
-      console.warn("computeAge error:", err);
+      return differenceInYears(new Date(), parsed);
+    } catch {
       return "-";
     }
   };
 
-  // export CSV util (inclui idade)
   const exportCSV = () => {
     if (!athletes?.length) {
       toast.error("Nenhum atleta para exportar");
@@ -108,15 +86,13 @@ export const Dashboard: React.FC = () => {
       defaultWeightKg: a.defaultWeightKg ?? "",
       coach: a.coach?.user?.name ?? a.coach?.user?.email ?? "",
     }));
-
     const headers = Object.keys(rows[0]);
     const csv = [
       headers.join(","),
-      ...rows.map((r: { [x: string]: any }) =>
-        headers.map((h) => `"${String(r[h] ?? "")}"`).join(",")
+      ...rows.map((r: any) =>
+        headers.map((h) => `"${String(r[h] ?? "")}"`).join(","),
       ),
     ].join("\n");
-
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -135,115 +111,139 @@ export const Dashboard: React.FC = () => {
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <header
-        className="bg-cover bg-center py-12 px-6 relative min-h-[200px] flex items-center"
+        className="bg-cover bg-center py-10 sm:py-12 px-4 sm:px-6 relative min-h-[160px] sm:min-h-[200px] flex items-center"
         style={{
           backgroundImage:
             "linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url(/images/judo-background.png)",
         }}
       >
-        <div className="text-center flex-1">
-          <h1 className="text-3xl font-bold text-white mb-4">
+        <div className="text-center flex-1 pt-10 sm:pt-0">
+          <h1 className="text-2xl sm:text-3xl font-bold text-white mb-3 sm:mb-4">
             Dashboard Judô Tracker
           </h1>
           <div className="w-24 h-0.5 bg-white mx-auto"></div>
         </div>
       </header>
 
-      {/* User info */}
-      <div className="absolute top-4 right-4 flex items-center space-x-4 bg-white/90 backdrop-blur-sm rounded-lg px-4 py-2 shadow-lg">
-        <span className="text-gray-700 text-sm font-medium">{user?.email}</span>
+      {/* User info bar */}
+      <div className="absolute top-3 right-3 sm:top-4 sm:right-4 flex items-center gap-2 sm:gap-4 bg-white/90 backdrop-blur-sm rounded-lg px-3 py-1.5 sm:px-4 sm:py-2 shadow-lg">
+        <span className="text-gray-700 text-xs sm:text-sm font-medium hidden sm:block">
+          {user?.email}
+        </span>
         <button
           onClick={() => signOut()}
-          className="py-1 px-3 bg-red-600 hover:bg-red-700 text-white rounded text-sm font-medium transition duration-200"
+          className="py-1 px-2 sm:px-3 bg-red-600 hover:bg-red-700 text-white rounded text-xs sm:text-sm font-medium transition duration-200"
         >
           Sair
         </button>
       </div>
 
       {/* Main */}
-      <main className="max-w-7xl mx-auto py-8 px-6">
+      <main className="max-w-7xl mx-auto py-6 sm:py-8 px-4 sm:px-6">
         {/* Actions */}
-        <div className="flex items-center gap-4 mb-6">
-          <Button onClick={() => setOpenCreateAthlete(true)}>
-            + Criar Atleta
+        <div className="flex flex-wrap items-center gap-2 sm:gap-4 mb-6">
+          <Button
+            onClick={() => setOpenCreateAthlete(true)}
+            className="text-sm sm:text-base"
+          >
+            + Atleta
           </Button>
-          <Button onClick={() => setOpenRecordWeigh(true)} variant="secondary">
-            + Registrar Pesagem
+          <Button
+            onClick={() => setOpenRecordWeigh(true)}
+            variant="secondary"
+            className="text-sm sm:text-base"
+          >
+            + Pesagem
+          </Button>
+          <Button
+            onClick={() => setOpenCreateCoach(true)}
+            variant="secondary"
+            className="text-sm sm:text-base"
+          >
+            + Treinador
           </Button>
 
-          <div className="ml-auto flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto sm:ml-auto mt-2 sm:mt-0">
             <input
               type="search"
               value={q}
               onChange={(e) => setQ(e.target.value)}
-              placeholder="Buscar atleta por nome ou email"
-              className="p-2 border rounded"
+              placeholder="Buscar atleta..."
+              className="flex-1 sm:flex-none p-2 border rounded text-sm"
             />
-            <Button onClick={exportCSV} variant="ghost">
+            <Button
+              onClick={exportCSV}
+              variant="ghost"
+              className="text-sm whitespace-nowrap"
+            >
               Exportar CSV
             </Button>
           </div>
         </div>
 
-        {/* Cards area */}
+        {/* Summary card */}
         <div className="mb-6">
           <Card>
-            <h2 className="font-semibold mb-2">Resumo</h2>
+            <h2 className="font-semibold mb-2 text-sm sm:text-base">Resumo</h2>
             <div className="text-sm text-slate-600">
               Total de atletas: <strong>{athletes.length}</strong>
             </div>
-            <div className="text-sm text-slate-600 mt-2">
+            <div className="text-sm text-slate-600 mt-1">
               Última atualização: <strong>{new Date().toLocaleString()}</strong>
             </div>
           </Card>
         </div>
 
         {/* Athletes table */}
-        <section className="bg-white p-6 rounded-lg shadow-md border border-gray-100">
-          <h2 className="text-xl font-semibold text-gray-800 mb-6">Atletas</h2>
+        <section className="bg-white p-4 sm:p-6 rounded-lg shadow-md border border-gray-100 mb-8">
+          <h2 className="text-lg sm:text-xl font-semibold text-gray-800 mb-4 sm:mb-6">
+            Atletas
+          </h2>
 
           {loading && (
             <div className="text-center py-8">
               <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-              <p className="mt-2 text-gray-600">Carregando atletas...</p>
+              <p className="mt-2 text-gray-600 text-sm">
+                Carregando atletas...
+              </p>
             </div>
           )}
 
           {error && (
             <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
-              <div className="text-red-700 font-medium">
+              <div className="text-red-700 font-medium text-sm">
                 Erro ao carregar dados
               </div>
-              <div className="text-red-600 text-sm mt-1">
+              <div className="text-red-600 text-xs mt-1">
                 {String(error.message)}
               </div>
             </div>
           )}
 
           {!loading && filtered?.length === 0 && (
-            <div className="text-center py-8 text-gray-500">
+            <div className="text-center py-8 text-gray-500 text-sm">
               Nenhum atleta encontrado.
             </div>
           )}
 
           {!loading && filtered?.length > 0 && (
-            <div className="overflow-x-auto">
-              <table className="w-full table-auto border-collapse">
+            <div className="overflow-x-auto -mx-4 sm:mx-0">
+              <table className="w-full table-auto border-collapse min-w-[500px]">
                 <thead>
                   <tr className="bg-gray-50">
-                    <th className="border border-gray-200 px-4 py-3 text-left text-gray-700 font-semibold">
+                    <th className="border border-gray-200 px-3 sm:px-4 py-2 sm:py-3 text-left text-gray-700 font-semibold text-sm">
                       Nome/Email
                     </th>
-                    <th className="border border-gray-200 px-4 py-3 text-left text-gray-700 font-semibold">
+                    <th className="border border-gray-200 px-3 sm:px-4 py-2 sm:py-3 text-left text-gray-700 font-semibold text-sm hidden sm:table-cell">
                       Altura (cm)
                     </th>
-                    <th className="border border-gray-200 px-4 py-3 text-left text-gray-700 font-semibold">
-                      Peso padrão (kg)
+                    <th className="border border-gray-200 px-3 sm:px-4 py-2 sm:py-3 text-left text-gray-700 font-semibold text-sm">
+                      Peso (kg)
                     </th>
-                    <th className="border border-gray-200 px-4 py-3 text-left text-gray-700 font-semibold">
+                    <th className="border border-gray-200 px-3 sm:px-4 py-2 sm:py-3 text-left text-gray-700 font-semibold text-sm hidden md:table-cell">
                       Idade
                     </th>
-                    <th className="border border-gray-200 px-4 py-3 text-left text-gray-700 font-semibold">
+                    <th className="border border-gray-200 px-3 sm:px-4 py-2 sm:py-3 text-left text-gray-700 font-semibold text-sm">
                       Treinador
                     </th>
                   </tr>
@@ -255,19 +255,19 @@ export const Dashboard: React.FC = () => {
                       className="hover:bg-gray-50 transition duration-150 cursor-pointer"
                       onClick={() => onRowClick(a.id)}
                     >
-                      <td className="border border-gray-200 px-4 py-3 text-gray-800">
+                      <td className="border border-gray-200 px-3 sm:px-4 py-2 sm:py-3 text-gray-800 text-sm">
                         {a.user?.name ?? a.user?.email}
                       </td>
-                      <td className="border border-gray-200 px-4 py-3 text-gray-600">
+                      <td className="border border-gray-200 px-3 sm:px-4 py-2 sm:py-3 text-gray-600 text-sm hidden sm:table-cell">
                         {a.heightCm ?? "-"}
                       </td>
-                      <td className="border border-gray-200 px-4 py-3 text-gray-600">
+                      <td className="border border-gray-200 px-3 sm:px-4 py-2 sm:py-3 text-gray-600 text-sm">
                         {a.defaultWeightKg ?? "-"}
                       </td>
-                      <td className="border border-gray-200 px-4 py-3 text-gray-600">
+                      <td className="border border-gray-200 px-3 sm:px-4 py-2 sm:py-3 text-gray-600 text-sm hidden md:table-cell">
                         {computeAge(a.dob)}
                       </td>
-                      <td className="border border-gray-200 px-4 py-3 text-gray-600">
+                      <td className="border border-gray-200 px-3 sm:px-4 py-2 sm:py-3 text-gray-600 text-sm">
                         {a.coach?.user?.name ?? "-"}
                       </td>
                     </tr>
@@ -277,6 +277,11 @@ export const Dashboard: React.FC = () => {
             </div>
           )}
         </section>
+
+        {/* Weight chart */}
+        {!loading && athletes.length > 0 && (
+          <WeightChart athletes={filtered} allAthletes={athletes} />
+        )}
       </main>
 
       {/* Modals */}
@@ -306,16 +311,26 @@ export const Dashboard: React.FC = () => {
       >
         <RecordWeighInForm />
       </ModalWrapper>
+
+      <ModalWrapper
+        open={openCreateCoach}
+        onClose={() => setOpenCreateCoach(false)}
+        title="Criar Treinador"
+      >
+        <CreateCoachForm
+          onSuccess={() => {
+            setOpenCreateCoach(false);
+            toast.success("Treinador criado");
+          }}
+        />
+      </ModalWrapper>
     </div>
   );
 };
 
 export default Dashboard;
 
-/* ModalWrapper (se você mantiver no final do mesmo arquivo) */
-import { Modal } from "../ui/components/Modal";
-import { parseISO } from "date-fns/parseISO";
-
+/* ModalWrapper */
 type MWProps = {
   open: boolean;
   onClose: () => void;
@@ -328,10 +343,8 @@ export const ModalWrapper: React.FC<MWProps> = ({
   onClose,
   title,
   children,
-}) => {
-  return (
-    <Modal open={open} onClose={onClose} title={title}>
-      <div className="py-2">{children}</div>
-    </Modal>
-  );
-};
+}) => (
+  <Modal open={open} onClose={onClose} title={title}>
+    <div className="py-2">{children}</div>
+  </Modal>
+);

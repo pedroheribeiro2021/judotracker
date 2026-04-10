@@ -15,7 +15,7 @@ export const Modal: React.FC<Props> = ({ open, onClose, title, children }) => {
   return ReactDOM.createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div className="absolute inset-0 bg-black opacity-30" onClick={onClose} />
-      <div className="relative bg-white rounded-xl p-6 z-10 w-full max-w-2xl shadow-card">
+      <div className="relative bg-white rounded-xl p-6 z-10 w-[90%] max-w-2xl shadow-card">
         <div className="flex items-start justify-between mb-4">
           {title ? <h3 className="text-lg font-semibold">{title}</h3> : <div />}
           <button
@@ -43,7 +43,7 @@ export const Modal: React.FC<Props> = ({ open, onClose, title, children }) => {
         <div>{children}</div>
       </div>
     </div>,
-    document.body
+    document.body,
   );
 };
 
