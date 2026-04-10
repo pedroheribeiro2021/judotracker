@@ -27,7 +27,7 @@ export type CurrentUser = {
 };
 
 export async function verifyFirebaseTokenAndGetUser(
-  authHeader?: string
+  authHeader?: string,
 ): Promise<CurrentUser | null> {
   if (!authHeader) return null;
   const matches = authHeader.match(/^Bearer (.+)$/i);
@@ -37,12 +37,12 @@ export async function verifyFirebaseTokenAndGetUser(
   if (!admin || !admin.auth) {
     throw new ApolloError(
       "Firebase admin not initialized",
-      "INTERNAL_SERVER_ERROR"
+      "INTERNAL_SERVER_ERROR",
     );
   }
 
   try {
-    const decoded = await admin.auth().verifyIdToken(token, true);
+    const decoded = await admin.auth().verifyIdToken(token);
     // decoded contains uid, email, name, etc.
     const uid = decoded.uid;
     const email = decoded.email ?? null;
@@ -83,7 +83,11 @@ export async function verifyFirebaseTokenAndGetUser(
     }
     // token invalid/expired
     // do not leak internal details
-    console.warn("Firebase token verification failed:", err?.message ?? err);
+    console.warn("Firebase token verification failed:", {
+      message: err?.message,
+      code: err?.code, // ex: auth/id-token-expired
+      errorInfo: err?.errorInfo,
+    });
     return null;
   }
 }
