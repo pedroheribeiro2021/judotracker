@@ -105,6 +105,7 @@ const typeDefs = gql`
     recordWeighIn(input: RecordWeighInInput!): WeighIn!
     createCoach(input: CreateCoachInput!): Coach!
     updateAthlete(input: UpdateAthleteInput!): Athlete!
+    deleteAthlete(id: ID!): Boolean!
   }
 `;
 
@@ -238,6 +239,50 @@ const resolvers = {
           user: true,
           coach: { include: { user: true } },
         },
+      });
+    },
+
+    deleteAthlete: async (_: any, { id }: { id: string }, ctx: any) => {
+      requireCoach(ctx);
+
+      // Verificar se o atleta existe
+      const athlete = await prisma.athlete.findUnique({
+        where: { id },
+        include: { user: true },
+      });
+
+      if (!athlete) {
+        throw new Error("Atleta não encontrado");
+      }
+
+      // Deletar em transação para garantir consistência
+      return await prisma.$transaction(async (tx) => {
+        // Deletar pesagens relacionadas
+        await tx.weighIn.deleteMany({
+          where: { athleteId: id },
+        });
+
+        // Deletar body measurements relacionados
+        await tx.bodyMeasurement.deleteMany({
+          where: { athleteId: id },
+        });
+
+        // Deletar entries relacionados
+        await tx.entry.deleteMany({
+          where: { athleteId: id },
+        });
+
+        // Deletar o atleta
+        await tx.athlete.delete({
+          where: { id },
+        });
+
+        // Deletar o usuário relacionado
+        await tx.user.delete({
+          where: { id: athlete.userId },
+        });
+
+        return true;
       });
     },
   },
