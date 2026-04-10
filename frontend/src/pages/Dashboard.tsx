@@ -160,7 +160,7 @@ export const Dashboard: React.FC = () => {
             variant="secondary"
             className="text-sm sm:text-base"
           >
-            + Treinador
+            + Treinador (Sensei)
           </Button>
 
           <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto sm:ml-auto mt-2 sm:mt-0">
@@ -244,7 +244,7 @@ export const Dashboard: React.FC = () => {
                       Idade
                     </th>
                     <th className="border border-gray-200 px-3 sm:px-4 py-2 sm:py-3 text-left text-gray-700 font-semibold text-sm">
-                      Treinador
+                      Treinador (Sensei)
                     </th>
                   </tr>
                 </thead>
