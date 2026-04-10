@@ -142,3 +142,9 @@ export const UPDATE_ATHLETE = gql`
     }
   }
 `;
+
+export const DELETE_ATHLETE = gql`
+  mutation DeleteAthlete($id: ID!) {
+    deleteAthlete(id: $id)
+  }
+`;

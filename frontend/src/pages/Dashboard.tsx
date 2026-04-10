@@ -1,7 +1,7 @@
 // frontend/src/pages/Dashboard.tsx
 import React, { useMemo, useState } from "react";
-import { useQuery } from "@apollo/client";
-import { GET_ATHLETES } from "../graphql/queries";
+import { useQuery, useMutation } from "@apollo/client";
+import { GET_ATHLETES, DELETE_ATHLETE } from "../graphql/queries";
 import { useAuth } from "../contexts/AuthContext";
 import CreateAthleteForm from "../components/CreateAthleteForm";
 import RecordWeighInForm from "../components/RecordWeighInForm";
@@ -14,11 +14,14 @@ import { Modal } from "../ui/components/Modal";
 import { parseISO } from "date-fns/parseISO";
 import WeightChart from "../components/WeightChart";
 import CreateCoachForm from "../components/CreateCoachForm";
+import { ConfirmDialog } from "../components/ConfirmDialog";
+import { EditAthleteForm } from "../components/EditAthleteForm";
 
 export const Dashboard: React.FC = () => {
-  const { data, loading, error } = useQuery(GET_ATHLETES, {
+  const { data, loading, error, refetch } = useQuery(GET_ATHLETES, {
     fetchPolicy: "network-only",
   });
+  const [deleteAthlete] = useMutation(DELETE_ATHLETE);
   const { user, signOut } = useAuth();
 
   const [openCreateAthlete, setOpenCreateAthlete] = useState(false);
@@ -28,6 +31,10 @@ export const Dashboard: React.FC = () => {
     null,
   );
   const [openAthleteDetail, setOpenAthleteDetail] = useState(false);
+  const [openEditAthlete, setOpenEditAthlete] = useState(false);
+  const [athleteToEdit, setAthleteToEdit] = useState<any>(null);
+  const [athleteToDelete, setAthleteToDelete] = useState<any>(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [q, setQ] = useState("");
 
   const athletes = data?.athletes ?? [];
@@ -102,14 +109,53 @@ export const Dashboard: React.FC = () => {
     URL.revokeObjectURL(url);
   };
 
+  const handleEditClick = (e: React.MouseEvent, athlete: any) => {
+    e.stopPropagation(); // Evitar abrir o modal de detalhes
+    setAthleteToEdit(athlete);
+    setOpenEditAthlete(true);
+  };
+
+  const handleDeleteClick = (e: React.MouseEvent, athlete: any) => {
+    e.stopPropagation(); // Evitar abrir o modal de detalhes
+    setAthleteToDelete(athlete);
+    setShowDeleteConfirm(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!athleteToDelete) return;
+
+    try {
+      await deleteAthlete({
+        variables: { id: athleteToDelete.id },
+        refetchQueries: [{ query: GET_ATHLETES }],
+      });
+
+      toast.success(
+        `Atleta ${athleteToDelete.user?.name || athleteToDelete.user?.email} excluído com sucesso`,
+      );
+      setShowDeleteConfirm(false);
+      setAthleteToDelete(null);
+      refetch();
+    } catch (error: any) {
+      console.error("Erro ao excluir atleta:", error);
+      toast.error(error.message || "Erro ao excluir atleta");
+    }
+  };
+
+  const handleEditSuccess = () => {
+    setOpenEditAthlete(false);
+    setAthleteToEdit(null);
+    refetch();
+  };
+
   const onRowClick = (athleteId: string) => {
     setSelectedAthleteId(athleteId);
     setOpenAthleteDetail(true);
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
+    <div className="min-h-screen bg-[var(--bg-default)]">
+      {/* Header mantém o mesmo código */}
       <header
         className="bg-cover bg-center py-10 sm:py-12 px-4 sm:px-6 relative min-h-[160px] sm:min-h-[200px] flex items-center"
         style={{
@@ -132,7 +178,7 @@ export const Dashboard: React.FC = () => {
         </span>
         <button
           onClick={() => signOut()}
-          className="py-1 px-2 sm:px-3 bg-red-600 hover:bg-red-700 text-white rounded text-xs sm:text-sm font-medium transition duration-200"
+          className="py-1 px-2 sm:px-3 bg-[var(--danger-500)] hover:bg-red-700 text-white rounded text-xs sm:text-sm font-medium transition duration-200"
         >
           Sair
         </button>
@@ -140,7 +186,7 @@ export const Dashboard: React.FC = () => {
 
       {/* Main */}
       <main className="max-w-7xl mx-auto py-6 sm:py-8 px-4 sm:px-6">
-        {/* Actions */}
+        {/* Actions - mesmo código */}
         <div className="flex flex-wrap items-center gap-2 sm:gap-4 mb-6">
           <Button
             onClick={() => setOpenCreateAthlete(true)}
@@ -160,7 +206,7 @@ export const Dashboard: React.FC = () => {
             variant="secondary"
             className="text-sm sm:text-base"
           >
-            + Treinador (Sensei)
+            + Treinador
           </Button>
 
           <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto sm:ml-auto mt-2 sm:mt-0">
@@ -202,7 +248,7 @@ export const Dashboard: React.FC = () => {
 
           {loading && (
             <div className="text-center py-8">
-              <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+              <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--brand-600)]"></div>
               <p className="mt-2 text-gray-600 text-sm">
                 Carregando atletas...
               </p>
@@ -228,9 +274,9 @@ export const Dashboard: React.FC = () => {
 
           {!loading && filtered?.length > 0 && (
             <div className="overflow-x-auto -mx-4 sm:mx-0">
-              <table className="w-full table-auto border-collapse min-w-[500px]">
+              <table className="w-full table-auto border-collapse min-w-[700px]">
                 <thead>
-                  <tr className="bg-gray-50">
+                  <tr className="bg-[var(--surface-200)]">
                     <th className="border border-gray-200 px-3 sm:px-4 py-2 sm:py-3 text-left text-gray-700 font-semibold text-sm">
                       Nome/Email
                     </th>
@@ -244,7 +290,10 @@ export const Dashboard: React.FC = () => {
                       Idade
                     </th>
                     <th className="border border-gray-200 px-3 sm:px-4 py-2 sm:py-3 text-left text-gray-700 font-semibold text-sm">
-                      Treinador (Sensei)
+                      Treinador
+                    </th>
+                    <th className="border border-gray-200 px-3 sm:px-4 py-2 sm:py-3 text-left text-gray-700 font-semibold text-sm">
+                      Ações
                     </th>
                   </tr>
                 </thead>
@@ -252,7 +301,7 @@ export const Dashboard: React.FC = () => {
                   {filtered.map((a: any) => (
                     <tr
                       key={a.id}
-                      className="hover:bg-gray-50 transition duration-150 cursor-pointer"
+                      className="hover:bg-[var(--surface-200)] transition duration-150 cursor-pointer"
                       onClick={() => onRowClick(a.id)}
                     >
                       <td className="border border-gray-200 px-3 sm:px-4 py-2 sm:py-3 text-gray-800 text-sm">
@@ -269,6 +318,48 @@ export const Dashboard: React.FC = () => {
                       </td>
                       <td className="border border-gray-200 px-3 sm:px-4 py-2 sm:py-3 text-gray-600 text-sm">
                         {a.coach?.user?.name ?? "-"}
+                      </td>
+                      <td className="border border-gray-200 px-3 sm:px-4 py-2 sm:py-3">
+                        <div className="flex gap-2">
+                          <button
+                            onClick={(e) => handleEditClick(e, a)}
+                            className="text-[var(--brand-600)] hover:text-[var(--brand-800)] transition"
+                            title="Editar"
+                          >
+                            <svg
+                              className="w-5 h-5"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                              />
+                            </svg>
+                          </button>
+                          <button
+                            onClick={(e) => handleDeleteClick(e, a)}
+                            className="text-[var(--danger-500)] hover:text-red-700 transition"
+                            title="Excluir"
+                          >
+                            <svg
+                              className="w-5 h-5"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                              />
+                            </svg>
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -299,6 +390,7 @@ export const Dashboard: React.FC = () => {
         <CreateAthleteForm
           onSuccess={() => {
             setOpenCreateAthlete(false);
+            refetch();
             toast.success("Atleta criado");
           }}
         />
@@ -320,17 +412,53 @@ export const Dashboard: React.FC = () => {
         <CreateCoachForm
           onSuccess={() => {
             setOpenCreateCoach(false);
+            refetch();
             toast.success("Treinador criado");
           }}
         />
       </ModalWrapper>
+
+      {/* Modal de edição */}
+      <ModalWrapper
+        open={openEditAthlete}
+        onClose={() => {
+          setOpenEditAthlete(false);
+          setAthleteToEdit(null);
+        }}
+        title={`Editar Atleta: ${athleteToEdit?.user?.name || athleteToEdit?.user?.email || ""}`}
+      >
+        {athleteToEdit && (
+          <EditAthleteForm
+            athlete={athleteToEdit}
+            onSuccess={handleEditSuccess}
+            onCancel={() => {
+              setOpenEditAthlete(false);
+              setAthleteToEdit(null);
+            }}
+          />
+        )}
+      </ModalWrapper>
+
+      {/* Confirm dialog de exclusão */}
+      <ConfirmDialog
+        isOpen={showDeleteConfirm}
+        onClose={() => {
+          setShowDeleteConfirm(false);
+          setAthleteToDelete(null);
+        }}
+        onConfirm={handleConfirmDelete}
+        title="Excluir Atleta"
+        message={`Tem certeza que deseja excluir o atleta "${athleteToDelete?.user?.name || athleteToDelete?.user?.email}"? Esta ação também removerá todas as pesagens e dados relacionados e não poderá ser desfeita.`}
+        confirmText="Excluir"
+        cancelText="Cancelar"
+      />
     </div>
   );
 };
 
 export default Dashboard;
 
-/* ModalWrapper */
+/* ModalWrapper - mantém o mesmo */
 type MWProps = {
   open: boolean;
   onClose: () => void;
