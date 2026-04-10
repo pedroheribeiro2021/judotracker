@@ -1,10 +1,29 @@
 // backend/src/index.ts
 import "dotenv/config";
-import { ApolloServer, gql, AuthenticationError } from "apollo-server";
+import {
+  ApolloServer,
+  gql,
+  AuthenticationError,
+  ForbiddenError,
+} from "apollo-server";
 import { PrismaClient } from "@prisma/client";
 import { verifyFirebaseTokenAndGetUser } from "./auth/index";
 
 const prisma = new PrismaClient();
+
+// Helper: throws if not authenticated
+function requireAuth(ctx: any) {
+  if (!ctx.currentUser) throw new AuthenticationError("Not authenticated");
+}
+
+// Helper: throws if not COACH role (admin)
+// backend/src/index.ts
+function requireCoach(ctx: any) {
+  requireAuth(ctx);
+  if (ctx.currentUser.role !== "COACH" && ctx.currentUser.role !== "ADMIN") {
+    throw new ForbiddenError("Acesso restrito a treinadores");
+  }
+}
 
 const typeDefs = gql`
   type User {
@@ -51,7 +70,7 @@ const typeDefs = gql`
     dob: String
     heightCm: Float
     defaultWeightKg: Float
-    coachId: ID # ← Adicione esta linha se quiser atribuir um coach ao criar atleta
+    coachId: ID
   }
 
   input RecordWeighInInput {
@@ -78,6 +97,7 @@ const typeDefs = gql`
     athlete(id: ID!): Athlete
     weighIns(athleteId: ID!): [WeighIn!]!
     coaches: [Coach!]!
+    me: User
   }
 
   type Mutation {
@@ -90,48 +110,50 @@ const typeDefs = gql`
 
 const resolvers = {
   Query: {
+    // COACH only: list all athletes
     athletes: async (_: any, __: any, ctx: any) => {
-      if (!ctx.currentUser) {
-        throw new AuthenticationError("Not authenticated");
-      }
+      requireCoach(ctx);
       return prisma.athlete.findMany({
         include: {
           user: true,
-          coach: { include: { user: true } }, // ← Inclua o coach com user
+          coach: { include: { user: true } },
         },
         orderBy: { createdAt: "desc" },
       });
     },
 
+    // COACH only: single athlete detail
     athlete: async (_: any, { id }: { id: string }, ctx: any) => {
-      if (!ctx.currentUser) throw new AuthenticationError("Not authenticated");
+      requireCoach(ctx);
       return prisma.athlete.findUnique({
         where: { id },
         include: {
           user: true,
-          coach: { include: { user: true } }, // ← Inclua o coach com user
+          coach: { include: { user: true } },
         },
       });
     },
 
+    // COACH only: weigh-ins
     weighIns: async (
       _: any,
       { athleteId }: { athleteId: string },
-      ctx: any
+      ctx: any,
     ) => {
-      if (!ctx.currentUser) throw new AuthenticationError("Not authenticated");
+      requireCoach(ctx);
       const rows = await prisma.weighIn.findMany({
         where: { athleteId },
         orderBy: { recordedAt: "desc" },
       });
-      return rows.map((r: { recordedAt: Date }) => ({
+      return rows.map((r: { recordedAt: Date } & Record<string, any>) => ({
         ...r,
         recordedAt: r.recordedAt.toISOString(),
       }));
     },
 
+    // COACH only: list coaches
     coaches: async (_: any, __: any, ctx: any) => {
-      // if (!ctx.currentUser) throw new Error("Unauthorized");
+      requireCoach(ctx);
       return prisma.coach.findMany({
         include: {
           user: true,
@@ -140,34 +162,40 @@ const resolvers = {
         orderBy: { createdAt: "desc" },
       });
     },
+
+    // Any authenticated user: returns own user data
+    me: async (_: any, __: any, ctx: any) => {
+      requireAuth(ctx);
+      if (!ctx.currentUser.id) return null;
+      return prisma.user.findUnique({ where: { id: ctx.currentUser.id } });
+    },
   },
 
   Mutation: {
+    // COACH only: create athlete
     createAthlete: async (_: any, { input }: any, ctx: any) => {
-      if (!ctx.currentUser) throw new AuthenticationError("Not authenticated");
-
+      requireCoach(ctx);
       const user = await prisma.user.create({
         data: { email: input.email, name: input.name ?? null, role: "ATHLETE" },
       });
-
-      const athlete = await prisma.athlete.create({
+      return prisma.athlete.create({
         data: {
           userId: user.id,
           dob: input.dob ? new Date(input.dob) : undefined,
           heightCm: input.heightCm,
           defaultWeightKg: input.defaultWeightKg,
-          coachId: input.coachId || null, // ← Atribua o coach se fornecido
+          coachId: input.coachId || null,
         },
         include: {
           user: true,
-          coach: { include: { user: true } }, // ← Inclua o coach na resposta
+          coach: { include: { user: true } },
         },
       });
-      return athlete;
     },
 
+    // COACH only: record weigh-in
     recordWeighIn: async (_: any, { input }: any, ctx: any) => {
-      if (!ctx.currentUser) throw new AuthenticationError("Not authenticated");
+      requireCoach(ctx);
       const wi = await prisma.weighIn.create({
         data: {
           athleteId: input.athleteId,
@@ -181,33 +209,25 @@ const resolvers = {
       return { ...wi, recordedAt: wi.recordedAt.toISOString() };
     },
 
+    // COACH only: create coach
     createCoach: async (_: any, { input }: any, ctx: any) => {
-      // if (!ctx.currentUser) throw new Error("Unauthorized");
-
+      requireCoach(ctx);
       const user = await prisma.user.create({
-        data: {
-          email: input.email,
-          name: input.name ?? null,
-          role: "COACH", // ← Importante: role como COACH
-        },
+        data: { email: input.email, name: input.name ?? null, role: "COACH" },
       });
-
-      const coach = await prisma.coach.create({
-        data: {
-          userId: user.id,
-        },
+      return prisma.coach.create({
+        data: { userId: user.id },
         include: {
           user: true,
           athletes: { include: { user: true } },
         },
       });
-      return coach;
     },
 
+    // COACH only: update athlete
     updateAthlete: async (_: any, { input }: any, ctx: any) => {
-      // if (!ctx.currentUser) throw new Error("Unauthorized"); // Comente temporariamente
-
-      const athlete = await prisma.athlete.update({
+      requireCoach(ctx);
+      return prisma.athlete.update({
         where: { id: input.id },
         data: {
           coachId: input.coachId || null,
@@ -219,12 +239,9 @@ const resolvers = {
           coach: { include: { user: true } },
         },
       });
-
-      return athlete;
     },
   },
 
-  // ← Adicione estres resolvers para as relações
   Athlete: {
     user: (parent: any) =>
       prisma.user.findUnique({ where: { id: parent.userId } }),
@@ -259,15 +276,16 @@ const server = new ApolloServer({
   typeDefs,
   resolvers,
   context: async ({ req }) => {
-    // Preflight CORS (OPTIONS) não envia Authorization — não tratar como falta de login
     if (req.method === "OPTIONS") {
       return { prisma, currentUser: null };
     }
     const authHeader = req.headers.authorization;
-    const currentUser = await verifyFirebaseTokenAndGetUser(authHeader);
     if (!authHeader) {
       console.warn("Missing Authorization header");
-    } else if (!currentUser) {
+      return { prisma, currentUser: null };
+    }
+    const currentUser = await verifyFirebaseTokenAndGetUser(authHeader);
+    if (!currentUser) {
       console.warn("Invalid/expired Firebase token");
     }
     return { prisma, currentUser };
@@ -279,10 +297,7 @@ const server = new ApolloServer({
 });
 
 server
-  .listen({
-    port: Number(process.env.PORT) || 4000,
-    path: "/graphql",
-  })
+  .listen({ port: Number(process.env.PORT) || 4000, path: "/graphql" })
   .then(({ url }) => {
-  console.log(`🚀 GraphQL server running at ${url}`);
-});
+    console.log(`🚀 GraphQL server running at ${url}`);
+  });

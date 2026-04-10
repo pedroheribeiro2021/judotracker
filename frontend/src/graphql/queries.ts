@@ -25,7 +25,6 @@ export const GET_ATHLETES = gql`
   }
 `;
 
-/* outras queries/mutations que você já tem */
 export const GET_ATHLETE = gql`
   query GetAthlete($id: ID!) {
     athlete(id: $id) {
@@ -102,6 +101,19 @@ export const CREATE_ATHLETE = gql`
   }
 `;
 
+export const CREATE_COACH = gql`
+  mutation CreateCoach($input: CreateCoachInput!) {
+    createCoach(input: $input) {
+      id
+      user {
+        id
+        email
+        name
+      }
+    }
+  }
+`;
+
 export const RECORD_WEIGHIN = gql`
   mutation RecordWeighIn($input: RecordWeighInInput!) {
     recordWeighIn(input: $input) {
@@ -109,6 +121,24 @@ export const RECORD_WEIGHIN = gql`
       athleteId
       weightKg
       recordedAt
+    }
+  }
+`;
+
+export const UPDATE_ATHLETE = gql`
+  mutation UpdateAthlete($input: UpdateAthleteInput!) {
+    updateAthlete(input: $input) {
+      id
+      heightCm
+      defaultWeightKg
+      coach {
+        id
+        user {
+          id
+          name
+          email
+        }
+      }
     }
   }
 `;
