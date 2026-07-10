@@ -1,50 +1,97 @@
 // frontend/src/ui/components/Modal.tsx
-import React from "react";
-import ReactDOM from "react-dom";
-import clsx from "clsx";
+import React, { useEffect } from "react";
 
-type Props = {
+type ModalProps = {
   open: boolean;
   onClose: () => void;
   title?: string;
-  children?: React.ReactNode;
+  children: React.ReactNode;
+  size?: "sm" | "md" | "lg" | "xl" | "full";
 };
 
-export const Modal: React.FC<Props> = ({ open, onClose, title, children }) => {
-  if (!open) return null;
-  return ReactDOM.createPortal(
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
-      <div className="absolute inset-0 bg-black opacity-30" onClick={onClose} />
-      <div className="relative bg-white rounded-xl p-6 z-10 w-full max-w-2xl shadow-card">
-        <div className="flex items-start justify-between mb-4">
-          {title ? <h3 className="text-lg font-semibold">{title}</h3> : <div />}
-          <button
-            aria-label="Fechar"
-            onClick={onClose}
-            className="ml-4 inline-flex items-center justify-center rounded-md p-2 hover:bg-gray-100"
-          >
-            {/* simple X icon */}
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-5 w-5 text-gray-600"
-              viewBox="0 0 20 20"
-              fill="currentColor"
-              aria-hidden
-            >
-              <path
-                fillRule="evenodd"
-                d="M10 8.586l4.95-4.95a1 1 0 111.414 1.414L11.414 10l4.95 4.95a1 1 0 01-1.414 1.414L10 11.414l-4.95 4.95a1 1 0 01-1.414-1.414L8.586 10 3.636 5.05A1 1 0 015.05 3.636L10 8.586z"
-                clipRule="evenodd"
-              />
-            </svg>
-          </button>
-        </div>
+export const Modal: React.FC<ModalProps> = ({
+  open,
+  onClose,
+  title,
+  children,
+  size = "md",
+}) => {
+  useEffect(() => {
+    if (open) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "unset";
+    }
+    return () => {
+      document.body.style.overflow = "unset";
+    };
+  }, [open]);
 
-        <div>{children}</div>
+  if (!open) return null;
+
+  const sizeClasses = {
+    sm: "max-w-md",
+    md: "max-w-2xl",
+    lg: "max-w-4xl",
+    xl: "max-w-6xl",
+    full: "max-w-[95vw]",
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 overflow-y-auto">
+      {/* Backdrop */}
+      <div
+        className="fixed inset-0 bg-black bg-opacity-50 transition-opacity"
+        onClick={onClose}
+      />
+
+      {/* Modal container */}
+      <div className="flex min-h-full items-start justify-center p-4 pt-8 sm:pt-12 md:pt-16">
+        <div
+          className={`
+            relative bg-white rounded-lg shadow-xl 
+            w-full ${sizeClasses[size]}
+            transform transition-all
+            max-h-[90vh] overflow-y-auto
+          `}
+          onClick={(e) => e.stopPropagation()}
+        >
+          {/* Header */}
+          {(title || true) && (
+            <div className="sticky top-0 z-10 bg-white border-b border-gray-200 px-4 py-3 sm:px-6 sm:py-4 rounded-t-lg">
+              <div className="flex items-center justify-between">
+                {title && (
+                  <h2 className="text-lg sm:text-xl font-semibold text-[var(--text-default)] pr-8">
+                    {title}
+                  </h2>
+                )}
+                <button
+                  onClick={onClose}
+                  className="text-gray-400 hover:text-gray-600 transition-colors ml-auto"
+                  aria-label="Fechar"
+                >
+                  <svg
+                    className="w-5 h-5 sm:w-6 sm:h-6"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M6 18L18 6M6 6l12 12"
+                    />
+                  </svg>
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Content */}
+          <div className="px-4 py-4 sm:px-6 sm:py-6">{children}</div>
+        </div>
       </div>
-    </div>,
-    document.body
+    </div>
   );
 };
-
-export default Modal;

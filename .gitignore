@@ -7,3 +7,5 @@ node_modules
 /.idea
 config/credentials/
 backend/keys/
+backend/dist/
+frontend/dist/
