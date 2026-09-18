@@ -38,11 +38,20 @@ function createMockPrisma() {
     },
     entry: {
       create: vi.fn(),
+      update: vi.fn(),
       delete: vi.fn(),
       deleteMany: vi.fn(),
+      findUnique: vi.fn(),
       findMany: vi.fn(),
     },
     competition: {
+      create: vi.fn(),
+      update: vi.fn(),
+      delete: vi.fn(),
+      findUnique: vi.fn(),
+      findMany: vi.fn(),
+    },
+    match: {
       create: vi.fn(),
       update: vi.fn(),
       delete: vi.fn(),

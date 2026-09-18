@@ -106,6 +106,13 @@ model Competition {
   entries              Entry[]
 }
 
+enum Medal {
+  GOLD
+  SILVER
+  BRONZE
+  NONE
+}
+
 model Entry {
   id            String      @id @default(uuid())
   competition   Competition @relation(fields: [competitionId], references: [id])
@@ -115,6 +122,42 @@ model Entry {
   weightClass   String?
   result        String?
   rank          Int?
+  finalPosition Int?
+  medal         Medal?
+  matches       Match[]
+}
+
+enum MatchResult {
+  WIN
+  LOSS
+  DRAW
+}
+
+enum ScoreType {
+  IPPON
+  WAZA_ARI
+  WAZA_ARI_AWASETE_IPPON
+  DECISION
+  HANSOKU_MAKE
+  FUSEN_GACHI
+}
+
+model Match {
+  id              String      @id @default(uuid())
+  entry           Entry       @relation(fields: [entryId], references: [id])
+  entryId         String
+  round           String
+  opponentName    String
+  opponentClub    String?
+  result          MatchResult
+  scoreType       ScoreType?
+  technique       String?
+  shidosFor       Int         @default(0)
+  shidosAgainst   Int         @default(0)
+  goldenScore     Boolean     @default(false)
+  durationSeconds Int?
+  notes           String?
+  createdAt       DateTime    @default(now())
 }
 
 model Media {
