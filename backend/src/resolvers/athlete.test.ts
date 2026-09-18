@@ -3,6 +3,8 @@ import { ForbiddenError } from "apollo-server";
 import { athleteResolvers } from "./athlete";
 import { createMockContext, athleteUser, asContext } from "../testUtils/mockContext";
 
+const DOB_SENIOR = "2000-05-10"; // referência: sempre 21+ anos em qualquer ano de teste razoável
+
 describe("athleteResolvers authz", () => {
   it("createAthlete lança ForbiddenError para currentUser sem role COACH/ADMIN", async () => {
     const mock = createMockContext(athleteUser);
@@ -130,6 +132,9 @@ describe("athleteResolvers.Mutation.deleteAthlete", () => {
     expect(mock.prisma.bodyMeasurement.deleteMany).toHaveBeenCalledWith({
       where: { athleteId: "athlete-1" },
     });
+    expect(mock.prisma.match.deleteMany).toHaveBeenCalledWith({
+      where: { entry: { athleteId: "athlete-1" } },
+    });
     expect(mock.prisma.entry.deleteMany).toHaveBeenCalledWith({
       where: { athleteId: "athlete-1" },
     });
@@ -140,5 +145,87 @@ describe("athleteResolvers.Mutation.deleteAthlete", () => {
       where: { id: "user-1" },
     });
     expect(result).toBe(true);
+  });
+});
+
+describe("athleteResolvers.Athlete.ageDivision / currentWeightClass", () => {
+  it("ageDivision é null sem data de nascimento", () => {
+    expect(athleteResolvers.Athlete.ageDivision({ dob: null } as any)).toBeNull();
+  });
+
+  it("ageDivision calcula a classe etária pela data de nascimento", () => {
+    expect(
+      athleteResolvers.Athlete.ageDivision({ dob: DOB_SENIOR } as any),
+    ).toBe("SENIOR");
+  });
+
+  it("currentWeightClass é null sem sexo cadastrado", async () => {
+    const mock = createMockContext();
+
+    const result = await athleteResolvers.Athlete.currentWeightClass(
+      { id: "athlete-1", dob: DOB_SENIOR, sex: null } as any,
+      null,
+      asContext(mock),
+    );
+
+    expect(result).toBeNull();
+    expect(mock.prisma.weighIn.findFirst).not.toHaveBeenCalled();
+  });
+
+  it("currentWeightClass usa a pesagem mais recente quando disponível", async () => {
+    const mock = createMockContext();
+    mock.prisma.weighIn.findFirst.mockResolvedValue({ weightKg: 74 } as any);
+
+    const result = await athleteResolvers.Athlete.currentWeightClass(
+      {
+        id: "athlete-1",
+        dob: DOB_SENIOR,
+        sex: "M",
+        defaultWeightKg: 90,
+      } as any,
+      null,
+      asContext(mock),
+    );
+
+    expect(mock.prisma.weighIn.findFirst).toHaveBeenCalledWith({
+      where: { athleteId: "athlete-1" },
+      orderBy: { recordedAt: "desc" },
+    });
+    expect(result).toBe("-81");
+  });
+
+  it("currentWeightClass usa defaultWeightKg quando não há pesagens", async () => {
+    const mock = createMockContext();
+    mock.prisma.weighIn.findFirst.mockResolvedValue(null);
+
+    const result = await athleteResolvers.Athlete.currentWeightClass(
+      { id: "athlete-1", dob: DOB_SENIOR, sex: "M", defaultWeightKg: 73 } as any,
+      null,
+      asContext(mock),
+    );
+
+    expect(result).toBe("-73");
+  });
+
+  it("lastWeighInKg retorna o peso da pesagem mais recente, com fallback para defaultWeightKg", async () => {
+    const mock = createMockContext();
+    mock.prisma.weighIn.findFirst.mockResolvedValueOnce({ weightKg: 74.5 } as any);
+
+    await expect(
+      athleteResolvers.Athlete.lastWeighInKg(
+        { id: "athlete-1", defaultWeightKg: 73 } as any,
+        null,
+        asContext(mock),
+      ),
+    ).resolves.toBe(74.5);
+
+    mock.prisma.weighIn.findFirst.mockResolvedValueOnce(null);
+    await expect(
+      athleteResolvers.Athlete.lastWeighInKg(
+        { id: "athlete-1", defaultWeightKg: 73 } as any,
+        null,
+        asContext(mock),
+      ),
+    ).resolves.toBe(73);
   });
 });

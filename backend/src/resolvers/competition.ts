@@ -79,10 +79,12 @@ export const competitionResolvers = {
       });
     },
 
-    // COACH only: excluir competição e suas inscrições
+    // COACH only: excluir competição, suas inscrições e as lutas relacionadas
     deleteCompetition: async (_: any, { id }: { id: string }, ctx: Context) => {
       requireCoach(ctx);
       return ctx.prisma.$transaction(async (tx) => {
+        // FK Match->Entry é RESTRICT, então as lutas precisam sair primeiro
+        await tx.match.deleteMany({ where: { entry: { competitionId: id } } });
         await tx.entry.deleteMany({ where: { competitionId: id } });
         await tx.competition.delete({ where: { id } });
         return true;
