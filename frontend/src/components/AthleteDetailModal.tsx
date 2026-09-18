@@ -229,6 +229,36 @@ export const AthleteDetailModal: React.FC<Props> = ({
                     </div>
                   )}
                 </div>
+
+                <div className="mt-6">
+                  <h3 className="text-lg font-semibold mb-2">Competições</h3>
+                  {!athlete.entries?.length && (
+                    <div className="text-sm text-slate-500">
+                      Nenhuma competição registrada.
+                    </div>
+                  )}
+                  {athlete.entries?.length > 0 && (
+                    <ul className="divide-y">
+                      {athlete.entries.map((entry: any) => (
+                        <li key={entry.id} className="py-2 text-sm">
+                          <div className="font-medium">
+                            {entry.competition?.name}
+                          </div>
+                          <div className="text-slate-500">
+                            {safeFormat(entry.competition?.date ?? null)}
+                            {entry.competition?.location
+                              ? ` · ${entry.competition.location}`
+                              : ""}
+                            {entry.weightClass
+                              ? ` · ${entry.weightClass}`
+                              : ""}
+                            {entry.rank ? ` · ${entry.rank}º lugar` : ""}
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
               </>
             )}
           </div>

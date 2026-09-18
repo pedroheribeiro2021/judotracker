@@ -1,5 +1,7 @@
 import React from "react";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { Dashboard } from "./pages/Dashboard";
+import { Competitions } from "./pages/Competitions";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import { Login } from "./pages/Login";
 
@@ -14,8 +16,16 @@ const AppInner: React.FC = () => {
     );
   }
 
-  // Só monta o Dashboard depois que o token está pronto no Apollo
-  return token ? <Dashboard /> : <Login />;
+  if (!token) return <Login />;
+
+  return (
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<Dashboard />} />
+        <Route path="/competitions" element={<Competitions />} />
+      </Routes>
+    </BrowserRouter>
+  );
 };
 
 const App: React.FC = () => (

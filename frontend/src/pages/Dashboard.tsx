@@ -1,5 +1,6 @@
 // frontend/src/pages/Dashboard.tsx
 import React, { useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import { useQuery, useMutation } from "@apollo/client";
 import { GET_ATHLETES, DELETE_ATHLETE } from "../graphql/queries";
 import { useAuth } from "../contexts/AuthContext";
@@ -173,6 +174,12 @@ export const Dashboard: React.FC = () => {
 
       {/* User info bar */}
       <div className="absolute top-3 right-3 sm:top-4 sm:right-4 flex items-center gap-2 sm:gap-4 bg-white/90 backdrop-blur-sm rounded-lg px-3 py-1.5 sm:px-4 sm:py-2 shadow-lg">
+        <Link
+          to="/competitions"
+          className="text-[var(--brand-600)] hover:text-[var(--brand-800)] text-xs sm:text-sm font-medium transition"
+        >
+          Competições
+        </Link>
         <span className="text-gray-700 text-xs sm:text-sm font-medium hidden sm:block">
           {user?.email}
         </span>
