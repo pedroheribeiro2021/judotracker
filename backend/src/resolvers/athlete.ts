@@ -116,6 +116,11 @@ export const athleteResolvers = {
           where: { athleteId: id },
         });
 
+        // Deletar graduações relacionadas (FK Promotion->Athlete é RESTRICT)
+        await tx.promotion.deleteMany({
+          where: { athleteId: id },
+        });
+
         // Deletar o atleta
         await tx.athlete.delete({
           where: { id },

@@ -38,6 +38,7 @@ model Athlete {
   weighIns        WeighIn[]
   bodyMeasurements BodyMeasurement[]
   entries         Entry[]
+  promotions      Promotion[]
   createdAt       DateTime         @default(now())
 
   Media Media[]
@@ -158,6 +159,47 @@ model Match {
   durationSeconds Int?
   notes           String?
   createdAt       DateTime    @default(now())
+}
+
+// Progressão oficial de faixas do judô brasileiro (CBJ, Regulamento para
+// Exame e Outorga de Faixas e Graus, Conselho Nacional de Graus, 2018),
+// da faixa branca à faixa vermelha 10º Dan. Inclui as faixas bicolores de
+// transição do sistema infantil (ex.: Branca/Cinza, Cinza/Azul) — ver
+// backend/src/domain/beltRanks.ts para rótulos e cores de exibição.
+enum BeltRank {
+  WHITE
+  WHITE_GREY
+  GREY
+  GREY_BLUE
+  BLUE
+  BLUE_YELLOW
+  YELLOW
+  YELLOW_ORANGE
+  ORANGE
+  GREEN
+  PURPLE
+  BROWN
+  BLACK_1DAN
+  BLACK_2DAN
+  BLACK_3DAN
+  BLACK_4DAN
+  BLACK_5DAN
+  RED_WHITE_6DAN
+  RED_WHITE_7DAN
+  RED_WHITE_8DAN
+  RED_9DAN
+  RED_10DAN
+}
+
+model Promotion {
+  id         String   @id @default(uuid())
+  athlete    Athlete  @relation(fields: [athleteId], references: [id])
+  athleteId  String
+  rank       BeltRank
+  promotedAt DateTime
+  promotedBy String?
+  notes      String?
+  createdAt  DateTime @default(now())
 }
 
 model Media {
