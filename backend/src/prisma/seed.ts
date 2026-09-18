@@ -123,6 +123,23 @@ async function main() {
     ],
   });
 
+  await prisma.promotion.createMany({
+    data: [
+      {
+        athleteId: athlete.id,
+        rank: "BROWN",
+        promotedAt: new Date("2022-03-01"),
+        promotedBy: "Sensei Yamamoto",
+      },
+      {
+        athleteId: athlete.id,
+        rank: "BLACK_1DAN",
+        promotedAt: new Date("2024-08-15"),
+        promotedBy: "Sensei Yamamoto",
+      },
+    ],
+  });
+
   console.log("Seed complete.");
 }
 

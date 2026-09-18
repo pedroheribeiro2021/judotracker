@@ -60,6 +60,13 @@ function createMockPrisma() {
       findUnique: vi.fn(),
       findMany: vi.fn(),
     },
+    promotion: {
+      create: vi.fn(),
+      delete: vi.fn(),
+      deleteMany: vi.fn(),
+      findFirst: vi.fn(),
+      findMany: vi.fn(),
+    },
     $transaction: vi.fn(),
   };
 }
