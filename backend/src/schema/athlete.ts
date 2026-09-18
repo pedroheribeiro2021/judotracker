@@ -12,6 +12,7 @@ export const athleteTypeDefs = gql`
     coach: Coach
     coachId: ID
     createdAt: String!
+    entries: [Entry!]!
   }
 
   input CreateAthleteInput {

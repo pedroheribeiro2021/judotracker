@@ -85,12 +85,25 @@ model BodyMeasurement {
   createdAt DateTime @default(now())
 }
 
+enum CompetitionLevel {
+  REGIONAL
+  ESTADUAL
+  NACIONAL
+  INTERNACIONAL
+}
+
 model Competition {
-  id      String  @id @default(uuid())
-  name    String
-  date    DateTime
-  location String?
-  entries Entry[]
+  id                   String            @id @default(uuid())
+  name                 String
+  date                 DateTime
+  location             String?
+  level                CompetitionLevel?
+  federation           String?
+  city                 String?
+  state                String?
+  registrationDeadline DateTime?
+  notes                String?
+  entries              Entry[]
 }
 
 model Entry {
