@@ -7,6 +7,7 @@ import { Card } from "../ui";
 import { format } from "date-fns";
 import { EditAthleteForm } from "./EditAthleteForm";
 import { MEDAL_EMOJI, Medal } from "../domain/matchEnums";
+import { AGE_DIVISION_LABELS } from "../domain/ageDivisions";
 
 type Props = {
   athleteId: string | null;
@@ -170,6 +171,23 @@ export const AthleteDetailModal: React.FC<Props> = ({
                     </div>
                     <div className="font-medium">
                       {athlete.defaultWeightKg ?? "-"}
+                    </div>
+                  </Card>
+                  <Card>
+                    <div className="text-sm text-slate-600">Classe etária</div>
+                    <div className="font-medium">
+                      {athlete.ageDivision
+                        ? (AGE_DIVISION_LABELS[athlete.ageDivision] ??
+                          athlete.ageDivision)
+                        : "-"}
+                    </div>
+                  </Card>
+                  <Card>
+                    <div className="text-sm text-slate-600">
+                      Categoria de peso atual
+                    </div>
+                    <div className="font-medium">
+                      {athlete.currentWeightClass ?? "-"}
                     </div>
                   </Card>
                   <Card className="md:col-span-2">

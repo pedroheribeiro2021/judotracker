@@ -18,6 +18,7 @@ export const EditAthleteForm: React.FC<Props> = ({ athlete, onSuccess, onCancel 
     heightCm: athlete?.heightCm || "",
     defaultWeightKg: athlete?.defaultWeightKg || "",
     coachId: athlete?.coach?.id || "",
+    sex: athlete?.sex || "",
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -36,6 +37,7 @@ export const EditAthleteForm: React.FC<Props> = ({ athlete, onSuccess, onCancel 
             heightCm: formData.heightCm ? parseFloat(formData.heightCm) : null,
             defaultWeightKg: formData.defaultWeightKg ? parseFloat(formData.defaultWeightKg) : null,
             coachId: formData.coachId || null,
+            sex: formData.sex || null,
           },
         },
         refetchQueries: [{ query: GET_ATHLETES }],
@@ -51,6 +53,22 @@ export const EditAthleteForm: React.FC<Props> = ({ athlete, onSuccess, onCancel 
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
+      <div>
+        <label className="block text-sm font-medium text-[var(--text-default)] mb-1">
+          Sexo
+        </label>
+        <select
+          name="sex"
+          value={formData.sex}
+          onChange={handleChange}
+          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--brand-500)] focus:border-[var(--brand-500)] transition bg-white"
+        >
+          <option value="">-</option>
+          <option value="M">Masculino</option>
+          <option value="F">Feminino</option>
+        </select>
+      </div>
+
       <div>
         <label className="block text-sm font-medium text-[var(--text-default)] mb-1">
           Altura (cm)

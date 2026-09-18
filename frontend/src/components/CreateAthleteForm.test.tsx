@@ -38,6 +38,7 @@ describe("CreateAthleteForm", () => {
             email: "novo@mail.com",
             name: "Fulano de Tal",
             dob: null,
+            sex: null,
             heightCm: null,
             defaultWeightKg: null,
             coachId: null,

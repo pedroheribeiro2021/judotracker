@@ -20,6 +20,7 @@ import {
   CompetitionLevel,
 } from "../domain/competitionLevels";
 import { MEDAL_EMOJI, Medal } from "../domain/matchEnums";
+import { formatWeightCutMessage, getWeightCutExcessKg } from "../domain/weightCut";
 
 type Tab = "upcoming" | "past";
 
@@ -136,6 +137,19 @@ const CompetitionCard: React.FC<{
                   {tab === "past" && entry.finalPosition
                     ? ` · ${entry.finalPosition}º lugar`
                     : ""}
+                  {tab === "upcoming" &&
+                    (() => {
+                      const excess = getWeightCutExcessKg(
+                        entry.weightClass,
+                        entry.athlete?.lastWeighInKg,
+                      );
+                      return excess != null ? (
+                        <Badge variant="danger">
+                          {" "}
+                          {formatWeightCutMessage(excess, entry.weightClass)}
+                        </Badge>
+                      ) : null;
+                    })()}
                 </span>
                 {tab === "upcoming" && (
                   <button

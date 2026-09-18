@@ -13,6 +13,7 @@ type FormData = {
   email: string;
   name?: string;
   dob?: string;
+  sex?: "" | "M" | "F";
   heightCm?: number | null;
   defaultWeightKg?: number | null;
   coachId?: string | null;
@@ -23,6 +24,7 @@ const schema: z.ZodType<FormData, any, any> = z.object({
   email: z.string().email(),
   name: z.string().min(2).optional(),
   dob: z.string().optional(), // we'll accept 'DD/MM/YYYY' or empty
+  sex: z.union([z.literal(""), z.literal("M"), z.literal("F")]).optional(),
   heightCm: z
     .any()
     .optional()
@@ -115,6 +117,7 @@ const CreateAthleteForm: React.FC<{ onSuccess?: () => void }> = ({
       email: "",
       name: "",
       dob: "",
+      sex: "",
       heightCm: undefined,
       defaultWeightKg: undefined,
       coachId: undefined,
@@ -144,6 +147,7 @@ const CreateAthleteForm: React.FC<{ onSuccess?: () => void }> = ({
         email: values.email,
         name: values.name ?? null,
         dob: dobIso, // ISO string or null
+        sex: values.sex || null,
         heightCm: values.heightCm ?? null,
         defaultWeightKg: values.defaultWeightKg ?? null,
         coachId: values.coachId ?? null,
@@ -183,6 +187,18 @@ const CreateAthleteForm: React.FC<{ onSuccess?: () => void }> = ({
         {...register("dob")}
         error={errors.dob?.message as string | undefined}
       />
+
+      <label className="block">
+        <span className="text-sm block mb-1">Sexo (opcional)</span>
+        <select
+          {...register("sex")}
+          className="w-full p-2 border rounded bg-white"
+        >
+          <option value="">-</option>
+          <option value="M">Masculino</option>
+          <option value="F">Feminino</option>
+        </select>
+      </label>
 
       <Input
         label="Altura (cm)"
