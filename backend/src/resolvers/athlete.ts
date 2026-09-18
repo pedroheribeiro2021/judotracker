@@ -1,6 +1,15 @@
 // backend/src/resolvers/athlete.ts
 import type { Context } from "../context";
 import { requireCoach } from "../context";
+import { getAgeDivision, getWeightClass, Sex } from "../domain/weightClasses";
+
+async function getLastWeighInKg(parent: any, ctx: Context) {
+  const lastWeighIn = await ctx.prisma.weighIn.findFirst({
+    where: { athleteId: parent.id },
+    orderBy: { recordedAt: "desc" },
+  });
+  return lastWeighIn?.weightKg ?? parent.defaultWeightKg ?? null;
+}
 
 export const athleteResolvers = {
   Query: {
@@ -40,6 +49,7 @@ export const athleteResolvers = {
         data: {
           userId: user.id,
           dob: input.dob ? new Date(input.dob) : undefined,
+          sex: input.sex,
           heightCm: input.heightCm,
           defaultWeightKg: input.defaultWeightKg,
           coachId: input.coachId || null,
@@ -60,6 +70,7 @@ export const athleteResolvers = {
         where: { id: input.id },
         data: {
           coachId: input.coachId,
+          sex: input.sex,
           heightCm: input.heightCm,
           defaultWeightKg: input.defaultWeightKg,
         },
@@ -95,6 +106,11 @@ export const athleteResolvers = {
           where: { athleteId: id },
         });
 
+        // Deletar lutas das inscrições do atleta (FK Match->Entry é RESTRICT)
+        await tx.match.deleteMany({
+          where: { entry: { athleteId: id } },
+        });
+
         // Deletar entries relacionados
         await tx.entry.deleteMany({
           where: { athleteId: id },
@@ -127,5 +143,16 @@ export const athleteResolvers = {
         : null,
     entries: (parent: any, _: any, ctx: Context) =>
       ctx.prisma.entry.findMany({ where: { athleteId: parent.id } }),
+    ageDivision: (parent: any) =>
+      parent.dob ? getAgeDivision(new Date(parent.dob), new Date()) : null,
+    currentWeightClass: async (parent: any, _: any, ctx: Context) => {
+      if (!parent.dob || !parent.sex) return null;
+      const weightKg = await getLastWeighInKg(parent, ctx);
+      if (weightKg == null) return null;
+      const ageDivision = getAgeDivision(new Date(parent.dob), new Date());
+      return getWeightClass(weightKg, ageDivision, parent.sex as Sex);
+    },
+    lastWeighInKg: (parent: any, _: any, ctx: Context) =>
+      getLastWeighInKg(parent, ctx),
   },
 };

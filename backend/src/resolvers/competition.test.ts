@@ -146,6 +146,9 @@ describe("competitionResolvers.Mutation.deleteCompetition", () => {
       asContext(mock),
     );
 
+    expect(mock.prisma.match.deleteMany).toHaveBeenCalledWith({
+      where: { entry: { competitionId: "comp-1" } },
+    });
     expect(mock.prisma.entry.deleteMany).toHaveBeenCalledWith({
       where: { competitionId: "comp-1" },
     });

@@ -30,6 +30,7 @@ function createMockPrisma() {
     },
     weighIn: {
       create: vi.fn(),
+      findFirst: vi.fn(),
       findMany: vi.fn(),
       deleteMany: vi.fn(),
     },
@@ -55,6 +56,7 @@ function createMockPrisma() {
       create: vi.fn(),
       update: vi.fn(),
       delete: vi.fn(),
+      deleteMany: vi.fn(),
       findUnique: vi.fn(),
       findMany: vi.fn(),
     },

@@ -16,6 +16,7 @@ async function main() {
     data: {
       userId: user.id,
       dob: new Date("1998-05-10"),
+      sex: "M",
       heightCm: 175,
       defaultWeightKg: 73,
     },

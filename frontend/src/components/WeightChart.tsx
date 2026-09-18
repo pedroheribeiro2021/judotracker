@@ -8,6 +8,7 @@ import {
   CartesianGrid,
   Tooltip,
   Legend,
+  ReferenceLine,
   ResponsiveContainer,
   TooltipProps,
 } from "recharts";
@@ -32,6 +33,7 @@ const LINE_COLORS = [
 type Athlete = {
   id: string;
   user?: { name?: string; email?: string };
+  currentWeightClass?: string | null;
 };
 
 type Props = {
@@ -104,6 +106,16 @@ const WeightChart: React.FC<Props> = ({ athletes, allAthletes }) => {
   }, [athletes, weighInMap]);
 
   const hasData = chartData.length > 0;
+
+  // Linha de limite de categoria só faz sentido com um único atleta em foco
+  // (cada atleta tem uma categoria-alvo diferente).
+  const targetWeightLimit = useMemo(() => {
+    if (athletes.length !== 1) return null;
+    const weightClass = athletes[0].currentWeightClass;
+    if (!weightClass || !weightClass.startsWith("-")) return null;
+    const limit = Number(weightClass.slice(1).replace(",", "."));
+    return Number.isNaN(limit) ? null : { limit, weightClass };
+  }, [athletes]);
 
   const athleteName = (a: Athlete) => a.user?.name ?? a.user?.email ?? a.id;
 
@@ -191,6 +203,19 @@ const WeightChart: React.FC<Props> = ({ athletes, allAthletes }) => {
                 formatter={customLegendFormatter}
                 wrapperStyle={{ fontSize: 12 }}
               />
+              {targetWeightLimit && (
+                <ReferenceLine
+                  y={targetWeightLimit.limit}
+                  stroke="#dc2626"
+                  strokeDasharray="4 4"
+                  label={{
+                    value: `Limite ${targetWeightLimit.weightClass}`,
+                    position: "insideTopRight",
+                    fontSize: 11,
+                    fill: "#dc2626",
+                  }}
+                />
+              )}
               {athletes.map((a, i) => (
                 <Line
                   key={a.id}

@@ -11,14 +11,26 @@ export const GET_ATHLETES = gql`
         name
       }
       dob
+      sex
       heightCm
       defaultWeightKg
+      ageDivision
+      currentWeightClass
+      lastWeighInKg
       coach {
         id
         user {
           id
           email
           name
+        }
+      }
+      entries {
+        id
+        weightClass
+        competition {
+          id
+          date
         }
       }
     }
@@ -30,8 +42,12 @@ export const GET_ATHLETE = gql`
     athlete(id: $id) {
       id
       dob
+      sex
       heightCm
       defaultWeightKg
+      ageDivision
+      currentWeightClass
+      lastWeighInKg
       user {
         id
         email
@@ -102,6 +118,7 @@ export const CREATE_ATHLETE = gql`
         name
       }
       dob
+      sex
       heightCm
       defaultWeightKg
       coach {
@@ -188,6 +205,7 @@ export const GET_COMPETITIONS = gql`
         athlete {
           id
           defaultWeightKg
+          lastWeighInKg
           user {
             id
             name

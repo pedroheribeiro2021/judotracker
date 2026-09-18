@@ -7,8 +7,12 @@ import { useAuth } from "../contexts/AuthContext";
 import CreateAthleteForm from "../components/CreateAthleteForm";
 import RecordWeighInForm from "../components/RecordWeighInForm";
 import AthleteDetailModal from "../components/AthleteDetailModal";
-import { Card } from "../ui";
+import { Card, Badge } from "../ui";
 import { Button } from "../ui";
+import {
+  formatWeightCutMessage,
+  getWeightCutExcessKg,
+} from "../domain/weightCut";
 import toast from "react-hot-toast";
 import { differenceInYears } from "date-fns";
 import { Modal } from "../ui/components/Modal";
@@ -49,6 +53,24 @@ export const Dashboard: React.FC = () => {
       return name.includes(term) || email.includes(term);
     });
   }, [athletes, q]);
+
+  const getWeightCutAlert = (athlete: any) => {
+    const now = new Date().getTime();
+    const upcomingEntries = (athlete.entries ?? []).filter((e: any) => {
+      const time = e.competition?.date
+        ? new Date(e.competition.date).getTime()
+        : NaN;
+      return !Number.isNaN(time) && time >= now;
+    });
+    for (const entry of upcomingEntries) {
+      const excess = getWeightCutExcessKg(
+        entry.weightClass,
+        athlete.lastWeighInKg,
+      );
+      if (excess != null) return { excess, weightClass: entry.weightClass };
+    }
+    return null;
+  };
 
   const computeAge = (dobValue?: string | number | null) => {
     if (dobValue == null) return "-";
@@ -319,6 +341,18 @@ export const Dashboard: React.FC = () => {
                       </td>
                       <td className="border border-gray-200 px-3 sm:px-4 py-2 sm:py-3 text-gray-600 text-sm">
                         {a.defaultWeightKg ?? "-"}
+                        {(() => {
+                          const alert = getWeightCutAlert(a);
+                          return alert ? (
+                            <Badge variant="danger">
+                              {" "}
+                              {formatWeightCutMessage(
+                                alert.excess,
+                                alert.weightClass,
+                              )}
+                            </Badge>
+                          ) : null;
+                        })()}
                       </td>
                       <td className="border border-gray-200 px-3 sm:px-4 py-2 sm:py-3 text-gray-600 text-sm hidden md:table-cell">
                         {computeAge(a.dob)}
