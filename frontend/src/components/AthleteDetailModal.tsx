@@ -1,13 +1,23 @@
 // frontend/src/components/AthleteDetailModal.tsx
 import React, { useState } from "react";
-import { useQuery } from "@apollo/client";
+import { useMutation, useQuery } from "@apollo/client";
 import { Modal } from "../ui/components/Modal";
-import { GET_ATHLETE, GET_WEIGHINS } from "../graphql/queries";
-import { Card } from "../ui";
-import { format } from "date-fns";
+import {
+  GET_ATHLETE,
+  GET_WEIGHINS,
+  GET_PROMOTIONS,
+  DELETE_PROMOTION,
+} from "../graphql/queries";
+import { Card, Button } from "../ui";
+import { format, differenceInMonths } from "date-fns";
+import toast from "react-hot-toast";
 import { EditAthleteForm } from "./EditAthleteForm";
+import { PromotionForm } from "./PromotionForm";
+import { BeltBadge } from "./BeltBadge";
+import { ConfirmDialog } from "./ConfirmDialog";
 import { MEDAL_EMOJI, Medal } from "../domain/matchEnums";
 import { AGE_DIVISION_LABELS } from "../domain/ageDivisions";
+import { BELT_RANK_LABELS, BeltRank } from "../domain/beltRanks";
 
 type Props = {
   athleteId: string | null;
@@ -51,12 +61,28 @@ function safeFormat(dateVal?: string | number | null, pattern = "dd/MM/yyyy") {
   }
 }
 
+/** Tempo decorrido desde uma data, formatado como "1 ano e 3 meses" (indicador de carência). */
+function formatTenure(dateVal?: string | number | null): string | null {
+  const d = parseFlexibleDate(dateVal ?? null);
+  if (!d) return null;
+  const totalMonths = Math.max(0, differenceInMonths(new Date(), d));
+  const years = Math.floor(totalMonths / 12);
+  const months = totalMonths % 12;
+  if (years === 0 && months === 0) return "há menos de 1 mês";
+  const parts: string[] = [];
+  if (years > 0) parts.push(`${years} ano${years !== 1 ? "s" : ""}`);
+  if (months > 0) parts.push(`${months} mês${months !== 1 ? "es" : ""}`);
+  return `há ${parts.join(" e ")}`;
+}
+
 export const AthleteDetailModal: React.FC<Props> = ({
   athleteId,
   open,
   onClose,
 }) => {
   const [isEditing, setIsEditing] = useState(false);
+  const [openPromotionForm, setOpenPromotionForm] = useState(false);
+  const [promotionToDelete, setPromotionToDelete] = useState<any>(null);
   const skipQuery = !open || !athleteId;
 
   const {
@@ -80,12 +106,38 @@ export const AthleteDetailModal: React.FC<Props> = ({
     fetchPolicy: "network-only",
   });
 
+  const {
+    data: promotionsData,
+    loading: promotionsLoading,
+    refetch: refetchPromotions,
+  } = useQuery(GET_PROMOTIONS, {
+    variables: { athleteId: athleteId as any },
+    skip: skipQuery,
+    fetchPolicy: "network-only",
+  });
+
+  const [deletePromotion] = useMutation(DELETE_PROMOTION);
+
   const athlete = athleteData?.athlete;
+  const promotions = promotionsData?.promotions ?? [];
 
   const handleEditSuccess = () => {
     setIsEditing(false);
     refetchAthlete();
     refetchWeigh();
+  };
+
+  const handleDeletePromotion = async () => {
+    if (!promotionToDelete) return;
+    try {
+      await deletePromotion({ variables: { id: promotionToDelete.id } });
+      toast.success("Graduação removida");
+      setPromotionToDelete(null);
+      refetchPromotions();
+      refetchAthlete();
+    } catch (err: any) {
+      toast.error(err?.message ?? "Erro ao remover graduação");
+    }
   };
 
   const handleClose = () => {
@@ -190,6 +242,21 @@ export const AthleteDetailModal: React.FC<Props> = ({
                       {athlete.currentWeightClass ?? "-"}
                     </div>
                   </Card>
+                  <Card>
+                    <div className="text-sm text-slate-600">Faixa atual</div>
+                    <div className="font-medium">
+                      {athlete.currentBelt ? (
+                        <BeltBadge rank={athlete.currentBelt} />
+                      ) : (
+                        "-"
+                      )}
+                    </div>
+                    {athlete.currentBelt && promotions[0]?.promotedAt && (
+                      <div className="text-xs text-slate-500 mt-1">
+                        Nesta faixa {formatTenure(promotions[0].promotedAt)}
+                      </div>
+                    )}
+                  </Card>
                   <Card className="md:col-span-2">
                     <div className="text-sm text-slate-600">Treinador</div>
                     <div className="font-medium">
@@ -283,11 +350,90 @@ export const AthleteDetailModal: React.FC<Props> = ({
                     </ul>
                   )}
                 </div>
+
+                <div className="mt-6">
+                  <div className="flex items-center justify-between mb-2">
+                    <h3 className="text-lg font-semibold">Graduações</h3>
+                    <Button size="sm" onClick={() => setOpenPromotionForm(true)}>
+                      + Registrar graduação
+                    </Button>
+                  </div>
+                  {promotionsLoading && (
+                    <div className="text-sm text-slate-500">
+                      Carregando graduações...
+                    </div>
+                  )}
+                  {!promotionsLoading && promotions.length === 0 && (
+                    <div className="text-sm text-slate-500">
+                      Nenhuma graduação registrada.
+                    </div>
+                  )}
+                  {promotions.length > 0 && (
+                    <ul className="divide-y">
+                      {promotions.map((p: any) => (
+                        <li
+                          key={p.id}
+                          className="py-2 text-sm flex items-start justify-between gap-2"
+                        >
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <BeltBadge rank={p.rank} />
+                              <span className="text-slate-500">
+                                {safeFormat(p.promotedAt)}
+                              </span>
+                            </div>
+                            <div className="text-slate-500 mt-1">
+                              {p.promotedBy ? `Outorgada por ${p.promotedBy}` : ""}
+                              {p.notes ? ` · ${p.notes}` : ""}
+                            </div>
+                          </div>
+                          <button
+                            type="button"
+                            className="text-xs text-danger-500 hover:text-red-700 shrink-0"
+                            onClick={() => setPromotionToDelete(p)}
+                          >
+                            Excluir
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
               </>
             )}
           </div>
         )}
       </div>
+
+      <Modal
+        open={openPromotionForm}
+        onClose={() => setOpenPromotionForm(false)}
+        title="Registrar graduação"
+      >
+        {athlete && (
+          <PromotionForm
+            athleteId={athlete.id}
+            onSuccess={() => {
+              setOpenPromotionForm(false);
+              refetchPromotions();
+              refetchAthlete();
+            }}
+            onCancel={() => setOpenPromotionForm(false)}
+          />
+        )}
+      </Modal>
+
+      <ConfirmDialog
+        isOpen={Boolean(promotionToDelete)}
+        onClose={() => setPromotionToDelete(null)}
+        onConfirm={handleDeletePromotion}
+        title="Excluir graduação"
+        message={`Tem certeza que deseja excluir a graduação "${
+          promotionToDelete ? BELT_RANK_LABELS[promotionToDelete.rank as BeltRank] : ""
+        }"?`}
+        confirmText="Excluir"
+        cancelText="Cancelar"
+      />
     </Modal>
   );
 };

@@ -17,6 +17,7 @@ export const GET_ATHLETES = gql`
       ageDivision
       currentWeightClass
       lastWeighInKg
+      currentBelt
       coach {
         id
         user {
@@ -48,6 +49,7 @@ export const GET_ATHLETE = gql`
       ageDivision
       currentWeightClass
       lastWeighInKg
+      currentBelt
       user {
         id
         email
@@ -366,5 +368,37 @@ export const SET_ENTRY_RESULT = gql`
       finalPosition
       medal
     }
+  }
+`;
+
+export const GET_PROMOTIONS = gql`
+  query GetPromotions($athleteId: ID!) {
+    promotions(athleteId: $athleteId) {
+      id
+      athleteId
+      rank
+      promotedAt
+      promotedBy
+      notes
+    }
+  }
+`;
+
+export const RECORD_PROMOTION = gql`
+  mutation RecordPromotion($input: RecordPromotionInput!) {
+    recordPromotion(input: $input) {
+      id
+      athleteId
+      rank
+      promotedAt
+      promotedBy
+      notes
+    }
+  }
+`;
+
+export const DELETE_PROMOTION = gql`
+  mutation DeletePromotion($id: ID!) {
+    deletePromotion(id: $id)
   }
 `;
