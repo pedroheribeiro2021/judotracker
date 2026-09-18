@@ -14,10 +14,12 @@ import { Modal } from "../ui/components/Modal";
 import { ConfirmDialog } from "../components/ConfirmDialog";
 import { CompetitionForm } from "../components/CompetitionForm";
 import { RegisterEntryForm } from "../components/RegisterEntryForm";
+import { EntrySummaryModal } from "../components/EntrySummaryModal";
 import {
   COMPETITION_LEVEL_LABELS,
   CompetitionLevel,
 } from "../domain/competitionLevels";
+import { MEDAL_EMOJI, Medal } from "../domain/matchEnums";
 
 type Tab = "upcoming" | "past";
 
@@ -37,7 +39,16 @@ const CompetitionCard: React.FC<{
   onDelete: () => void;
   onRegister: () => void;
   onRemoveEntry: (entryId: string) => void;
-}> = ({ competition, tab, onEdit, onDelete, onRegister, onRemoveEntry }) => {
+  onOpenSummary: (entry: any) => void;
+}> = ({
+  competition,
+  tab,
+  onEdit,
+  onDelete,
+  onRegister,
+  onRemoveEntry,
+  onOpenSummary,
+}) => {
   const deadlineDays =
     tab === "upcoming" && competition.registrationDeadline
       ? differenceInCalendarDays(
@@ -109,20 +120,30 @@ const CompetitionCard: React.FC<{
             {competition.entries.map((entry: any) => (
               <li
                 key={entry.id}
-                className="flex items-center justify-between py-1.5 text-sm"
+                className={`flex items-center justify-between py-1.5 text-sm ${
+                  tab === "past" ? "cursor-pointer hover:bg-surface-100" : ""
+                }`}
+                onClick={
+                  tab === "past" ? () => onOpenSummary(entry) : undefined
+                }
               >
                 <span>
+                  {entry.medal && entry.medal !== "NONE"
+                    ? `${MEDAL_EMOJI[entry.medal as Exclude<Medal, "NONE">]} `
+                    : ""}
                   {entry.athlete?.user?.name ?? entry.athlete?.user?.email}
                   {entry.weightClass ? ` · ${entry.weightClass}` : ""}
-                  {tab === "past" && entry.result ? ` · ${entry.result}` : ""}
-                  {tab === "past" && entry.rank
-                    ? ` · ${entry.rank}º lugar`
+                  {tab === "past" && entry.finalPosition
+                    ? ` · ${entry.finalPosition}º lugar`
                     : ""}
                 </span>
                 {tab === "upcoming" && (
                   <button
                     type="button"
-                    onClick={() => onRemoveEntry(entry.id)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onRemoveEntry(entry.id);
+                    }}
                     className="text-danger-500 hover:text-red-700 text-xs"
                   >
                     Remover
@@ -153,6 +174,10 @@ export const Competitions: React.FC = () => {
   const [competitionToDelete, setCompetitionToDelete] = useState<any>(null);
   const [competitionToRegister, setCompetitionToRegister] =
     useState<any>(null);
+  const [summaryEntry, setSummaryEntry] = useState<{
+    entry: any;
+    competitionName: string;
+  } | null>(null);
 
   const competitions = data?.competitions ?? [];
 
@@ -248,6 +273,9 @@ export const Competitions: React.FC = () => {
             onDelete={() => setCompetitionToDelete(c)}
             onRegister={() => setCompetitionToRegister(c)}
             onRemoveEntry={handleRemoveEntry}
+            onOpenSummary={(entry) =>
+              setSummaryEntry({ entry, competitionName: c.name })
+            }
           />
         ))}
       </main>
@@ -312,6 +340,21 @@ export const Competitions: React.FC = () => {
         confirmText="Excluir"
         cancelText="Cancelar"
       />
+
+      {summaryEntry && (
+        <EntrySummaryModal
+          entry={summaryEntry.entry}
+          athleteName={
+            summaryEntry.entry.athlete?.user?.name ??
+            summaryEntry.entry.athlete?.user?.email ??
+            "Atleta"
+          }
+          competitionName={summaryEntry.competitionName}
+          open={Boolean(summaryEntry)}
+          onClose={() => setSummaryEntry(null)}
+          onResultSaved={() => refetch()}
+        />
+      )}
     </div>
   );
 };
