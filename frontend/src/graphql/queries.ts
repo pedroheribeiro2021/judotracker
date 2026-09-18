@@ -51,6 +51,8 @@ export const GET_ATHLETE = gql`
         weightClass
         result
         rank
+        finalPosition
+        medal
         competition {
           id
           name
@@ -181,6 +183,8 @@ export const GET_COMPETITIONS = gql`
         weightClass
         result
         rank
+        finalPosition
+        medal
         athlete {
           id
           defaultWeightKg
@@ -264,5 +268,85 @@ export const REGISTER_ENTRY = gql`
 export const REMOVE_ENTRY = gql`
   mutation RemoveEntry($id: ID!) {
     removeEntry(id: $id)
+  }
+`;
+
+export const GET_MATCHES = gql`
+  query GetMatches($entryId: ID!) {
+    matches(entryId: $entryId) {
+      id
+      entryId
+      round
+      opponentName
+      opponentClub
+      result
+      scoreType
+      technique
+      shidosFor
+      shidosAgainst
+      goldenScore
+      durationSeconds
+      notes
+    }
+  }
+`;
+
+export const RECORD_MATCH = gql`
+  mutation RecordMatch($input: RecordMatchInput!) {
+    recordMatch(input: $input) {
+      id
+      entryId
+      round
+      opponentName
+      opponentClub
+      result
+      scoreType
+      technique
+      shidosFor
+      shidosAgainst
+      goldenScore
+      durationSeconds
+      notes
+    }
+  }
+`;
+
+export const UPDATE_MATCH = gql`
+  mutation UpdateMatch($input: UpdateMatchInput!) {
+    updateMatch(input: $input) {
+      id
+      entryId
+      round
+      opponentName
+      opponentClub
+      result
+      scoreType
+      technique
+      shidosFor
+      shidosAgainst
+      goldenScore
+      durationSeconds
+      notes
+    }
+  }
+`;
+
+export const DELETE_MATCH = gql`
+  mutation DeleteMatch($id: ID!) {
+    deleteMatch(id: $id)
+  }
+`;
+
+export const SET_ENTRY_RESULT = gql`
+  mutation SetEntryResult($entryId: ID!, $finalPosition: Int, $medal: Medal) {
+    setEntryResult(
+      entryId: $entryId
+      finalPosition: $finalPosition
+      medal: $medal
+    ) {
+      id
+      finalPosition
+      medal
+    }
   }
 `;

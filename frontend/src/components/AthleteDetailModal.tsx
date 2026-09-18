@@ -6,6 +6,7 @@ import { GET_ATHLETE, GET_WEIGHINS } from "../graphql/queries";
 import { Card } from "../ui";
 import { format } from "date-fns";
 import { EditAthleteForm } from "./EditAthleteForm";
+import { MEDAL_EMOJI, Medal } from "../domain/matchEnums";
 
 type Props = {
   athleteId: string | null;
@@ -242,6 +243,9 @@ export const AthleteDetailModal: React.FC<Props> = ({
                       {athlete.entries.map((entry: any) => (
                         <li key={entry.id} className="py-2 text-sm">
                           <div className="font-medium">
+                            {entry.medal && entry.medal !== "NONE"
+                              ? `${MEDAL_EMOJI[entry.medal as Exclude<Medal, "NONE">]} `
+                              : ""}
                             {entry.competition?.name}
                           </div>
                           <div className="text-slate-500">
@@ -252,7 +256,9 @@ export const AthleteDetailModal: React.FC<Props> = ({
                             {entry.weightClass
                               ? ` · ${entry.weightClass}`
                               : ""}
-                            {entry.rank ? ` · ${entry.rank}º lugar` : ""}
+                            {entry.finalPosition
+                              ? ` · ${entry.finalPosition}º lugar`
+                              : ""}
                           </div>
                         </li>
                       ))}
