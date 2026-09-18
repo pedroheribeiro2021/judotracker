@@ -125,5 +125,7 @@ export const athleteResolvers = {
             include: { user: true },
           })
         : null,
+    entries: (parent: any, _: any, ctx: Context) =>
+      ctx.prisma.entry.findMany({ where: { athleteId: parent.id } }),
   },
 };

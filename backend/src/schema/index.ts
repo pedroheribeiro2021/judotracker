@@ -4,6 +4,7 @@ import { userTypeDefs } from "./user";
 import { athleteTypeDefs } from "./athlete";
 import { coachTypeDefs } from "./coach";
 import { weighInTypeDefs } from "./weighIn";
+import { competitionTypeDefs } from "./competition";
 
 export const typeDefs = [
   rootTypeDefs,
@@ -11,4 +12,5 @@ export const typeDefs = [
   athleteTypeDefs,
   coachTypeDefs,
   weighInTypeDefs,
+  competitionTypeDefs,
 ];
