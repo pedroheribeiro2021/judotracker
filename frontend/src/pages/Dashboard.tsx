@@ -7,6 +7,7 @@ import { useAuth } from "../contexts/AuthContext";
 import CreateAthleteForm from "../components/CreateAthleteForm";
 import RecordWeighInForm from "../components/RecordWeighInForm";
 import AthleteDetailModal from "../components/AthleteDetailModal";
+import { BeltBadge } from "../components/BeltBadge";
 import { Card, Badge } from "../ui";
 import { Button } from "../ui";
 import {
@@ -334,7 +335,10 @@ export const Dashboard: React.FC = () => {
                       onClick={() => onRowClick(a.id)}
                     >
                       <td className="border border-gray-200 px-3 sm:px-4 py-2 sm:py-3 text-gray-800 text-sm">
-                        {a.user?.name ?? a.user?.email}
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span>{a.user?.name ?? a.user?.email}</span>
+                          <BeltBadge rank={a.currentBelt} />
+                        </div>
                       </td>
                       <td className="border border-gray-200 px-3 sm:px-4 py-2 sm:py-3 text-gray-600 text-sm hidden sm:table-cell">
                         {a.heightCm ?? "-"}
