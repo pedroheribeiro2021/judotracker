@@ -1,5 +1,6 @@
 // frontend/src/components/AthleteDetailModal.tsx
 import React, { useState } from "react";
+import { Link } from "react-router-dom";
 import { useMutation, useQuery } from "@apollo/client";
 import { Modal } from "../ui/components/Modal";
 import {
@@ -163,7 +164,13 @@ export const AthleteDetailModal: React.FC<Props> = ({
           <div>
             {/* Botão de editar */}
             {!isEditing && (
-              <div className="flex justify-end mb-4">
+              <div className="flex justify-end gap-2 mb-4">
+                <Link
+                  to={`/athletes/${athlete.id}`}
+                  className="bg-[var(--surface-200)] hover:bg-gray-300 text-[var(--text-default)] px-4 py-2 rounded-md transition duration-200 text-sm flex items-center font-medium"
+                >
+                  Ver estatísticas
+                </Link>
                 <button
                   onClick={() => setIsEditing(true)}
                   className="bg-[var(--brand-600)] hover:bg-[var(--brand-700)] text-white px-4 py-2 rounded-md transition duration-200 text-sm flex items-center gap-2 font-medium"

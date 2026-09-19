@@ -7,6 +7,7 @@ import { weighInTypeDefs } from "./weighIn";
 import { competitionTypeDefs } from "./competition";
 import { matchTypeDefs } from "./match";
 import { promotionTypeDefs } from "./promotion";
+import { athleteStatsTypeDefs } from "./athleteStats";
 
 export const typeDefs = [
   rootTypeDefs,
@@ -17,4 +18,5 @@ export const typeDefs = [
   competitionTypeDefs,
   matchTypeDefs,
   promotionTypeDefs,
+  athleteStatsTypeDefs,
 ];

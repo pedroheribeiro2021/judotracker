@@ -23,6 +23,22 @@ export function requireCoach(ctx: Context) {
   }
 }
 
+// Helper: throws unless currentUser is COACH/ADMIN, or the ATHLETE whose
+// Athlete.id matches athleteId (compares via Athlete.userId, já que
+// currentUser.id é o User.id, não o Athlete.id).
+export async function requireSelfOrCoach(ctx: Context, athleteId: string) {
+  requireAuth(ctx);
+  const role = ctx.currentUser!.role;
+  if (role === "COACH" || role === "ADMIN") return;
+  if (role === "ATHLETE" && ctx.currentUser!.id) {
+    const athlete = await ctx.prisma.athlete.findUnique({
+      where: { id: athleteId },
+    });
+    if (athlete && athlete.userId === ctx.currentUser!.id) return;
+  }
+  throw new ForbiddenError("Acesso restrito ao próprio atleta ou a treinadores");
+}
+
 export async function createContext({ req }: { req: any }): Promise<Context> {
   if (req.method === "OPTIONS") {
     return { prisma, currentUser: null };
