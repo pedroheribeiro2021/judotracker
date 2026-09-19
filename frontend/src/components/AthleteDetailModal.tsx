@@ -9,7 +9,7 @@ import {
   GET_PROMOTIONS,
   DELETE_PROMOTION,
 } from "../graphql/queries";
-import { Card, Button } from "../ui";
+import { Card, Button, Badge } from "../ui";
 import { format, differenceInMonths } from "date-fns";
 import toast from "react-hot-toast";
 import { EditAthleteForm } from "./EditAthleteForm";
@@ -263,6 +263,16 @@ export const AthleteDetailModal: React.FC<Props> = ({
                         Nesta faixa {formatTenure(promotions[0].promotedAt)}
                       </div>
                     )}
+                  </Card>
+                  <Card>
+                    <div className="text-sm text-slate-600">Status</div>
+                    <div className="font-medium">
+                      {athlete.status === "INJURED" ? (
+                        <Badge variant="danger">Lesionado</Badge>
+                      ) : (
+                        "Ativo"
+                      )}
+                    </div>
                   </Card>
                   <Card className="md:col-span-2">
                     <div className="text-sm text-slate-600">Treinador</div>

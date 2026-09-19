@@ -9,6 +9,7 @@ import { matchTypeDefs } from "./match";
 import { promotionTypeDefs } from "./promotion";
 import { athleteStatsTypeDefs } from "./athleteStats";
 import { trainingTypeDefs } from "./training";
+import { injuryTypeDefs } from "./injury";
 
 export const typeDefs = [
   rootTypeDefs,
@@ -21,4 +22,5 @@ export const typeDefs = [
   promotionTypeDefs,
   athleteStatsTypeDefs,
   trainingTypeDefs,
+  injuryTypeDefs,
 ];

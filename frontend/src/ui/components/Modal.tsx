@@ -66,6 +66,7 @@ export const Modal: React.FC<ModalProps> = ({
                   </h2>
                 )}
                 <button
+                  type="button"
                   onClick={onClose}
                   className="text-gray-400 hover:text-gray-600 transition-colors ml-auto"
                   aria-label="Fechar"

@@ -40,6 +40,7 @@ model Athlete {
   entries         Entry[]
   promotions      Promotion[]
   attendances     Attendance[]
+  injuries        Injury[]
   createdAt       DateTime         @default(now())
 
   Media Media[]
@@ -233,6 +234,26 @@ model Attendance {
   present   Boolean         @default(true)
 
   @@unique([sessionId, athleteId])
+}
+
+enum InjurySeverity {
+  MINOR
+  MODERATE
+  SEVERE
+}
+
+model Injury {
+  id             String         @id @default(uuid())
+  athlete        Athlete        @relation(fields: [athleteId], references: [id])
+  athleteId      String
+  bodyPart       String
+  description    String
+  occurredAt     DateTime
+  expectedReturn DateTime?
+  resolvedAt     DateTime?
+  severity       InjurySeverity
+  notes          String?
+  createdAt      DateTime       @default(now())
 }
 
 model Media {

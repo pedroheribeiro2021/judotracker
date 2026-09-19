@@ -78,6 +78,13 @@ function createMockPrisma() {
       deleteMany: vi.fn(),
       findMany: vi.fn(),
     },
+    injury: {
+      create: vi.fn(),
+      update: vi.fn(),
+      deleteMany: vi.fn(),
+      findFirst: vi.fn(),
+      findMany: vi.fn(),
+    },
     $transaction: vi.fn(),
   };
 }

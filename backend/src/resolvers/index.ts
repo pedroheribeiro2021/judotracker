@@ -8,6 +8,7 @@ import { matchResolvers } from "./match";
 import { promotionResolvers } from "./promotion";
 import { athleteStatsResolvers } from "./athleteStats";
 import { trainingResolvers } from "./training";
+import { injuryResolvers } from "./injury";
 
 export const resolvers = {
   Query: {
@@ -20,6 +21,7 @@ export const resolvers = {
     ...promotionResolvers.Query,
     ...athleteStatsResolvers.Query,
     ...trainingResolvers.Query,
+    ...injuryResolvers.Query,
   },
   Mutation: {
     ...athleteResolvers.Mutation,
@@ -29,12 +31,14 @@ export const resolvers = {
     ...matchResolvers.Mutation,
     ...promotionResolvers.Mutation,
     ...trainingResolvers.Mutation,
+    ...injuryResolvers.Mutation,
   },
   User: userResolvers.User,
   Athlete: {
     ...athleteResolvers.Athlete,
     ...promotionResolvers.Athlete,
     ...trainingResolvers.Athlete,
+    ...injuryResolvers.Athlete,
   },
   Coach: coachResolvers.Coach,
   Competition: competitionResolvers.Competition,
@@ -43,4 +47,5 @@ export const resolvers = {
   Promotion: promotionResolvers.Promotion,
   TrainingSession: trainingResolvers.TrainingSession,
   Attendance: trainingResolvers.Attendance,
+  Injury: injuryResolvers.Injury,
 };

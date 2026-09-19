@@ -121,6 +121,16 @@ export const athleteResolvers = {
           where: { athleteId: id },
         });
 
+        // Deletar presenças relacionadas (FK Attendance->Athlete é RESTRICT)
+        await tx.attendance.deleteMany({
+          where: { athleteId: id },
+        });
+
+        // Deletar lesões relacionadas (FK Injury->Athlete é RESTRICT)
+        await tx.injury.deleteMany({
+          where: { athleteId: id },
+        });
+
         // Deletar o atleta
         await tx.athlete.delete({
           where: { id },

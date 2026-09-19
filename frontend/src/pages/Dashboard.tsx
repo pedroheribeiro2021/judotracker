@@ -352,6 +352,9 @@ export const Dashboard: React.FC = () => {
                         <div className="flex items-center gap-2 flex-wrap">
                           <span>{a.user?.name ?? a.user?.email}</span>
                           <BeltBadge rank={a.currentBelt} />
+                          {a.status === "INJURED" && (
+                            <Badge variant="danger">Lesionado</Badge>
+                          )}
                           {hasLowAttendance(a) && (
                             <Badge variant="danger">
                               Presença {a.attendanceStats.rate30}% no mês

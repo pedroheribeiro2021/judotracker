@@ -29,6 +29,7 @@ export const ConfirmDialog: React.FC<Props> = ({
         <p className="text-[var(--text-default)]">{message}</p>
         <div className="flex gap-2 pt-4">
           <button
+            type="button"
             onClick={onConfirm}
             disabled={isLoading}
             className="flex-1 bg-[var(--danger-500)] hover:bg-red-700 text-white py-2 px-4 rounded-md transition duration-200 disabled:opacity-50 font-medium"
@@ -36,6 +37,7 @@ export const ConfirmDialog: React.FC<Props> = ({
             {isLoading ? "Excluindo..." : confirmText}
           </button>
           <button
+            type="button"
             onClick={onClose}
             disabled={isLoading}
             className="flex-1 bg-[var(--surface-200)] hover:bg-gray-300 text-[var(--text-default)] py-2 px-4 rounded-md transition duration-200"
