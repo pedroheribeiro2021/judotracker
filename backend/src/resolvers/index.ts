@@ -6,6 +6,7 @@ import { weighInResolvers } from "./weighIn";
 import { competitionResolvers } from "./competition";
 import { matchResolvers } from "./match";
 import { promotionResolvers } from "./promotion";
+import { athleteStatsResolvers } from "./athleteStats";
 
 export const resolvers = {
   Query: {
@@ -16,6 +17,7 @@ export const resolvers = {
     ...competitionResolvers.Query,
     ...matchResolvers.Query,
     ...promotionResolvers.Query,
+    ...athleteStatsResolvers.Query,
   },
   Mutation: {
     ...athleteResolvers.Mutation,

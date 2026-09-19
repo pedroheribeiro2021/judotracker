@@ -21,6 +21,41 @@ describe("athleteResolvers authz", () => {
   });
 });
 
+describe("athleteResolvers.Query.athlete authz", () => {
+  it("permite COACH consultar qualquer atleta", async () => {
+    const mock = createMockContext();
+    mock.prisma.athlete.findUnique.mockResolvedValue({ id: "athlete-1" } as any);
+
+    await expect(
+      athleteResolvers.Query.athlete(null, { id: "athlete-1" }, asContext(mock)),
+    ).resolves.toEqual({ id: "athlete-1" });
+  });
+
+  it("permite ATHLETE consultar o próprio registro", async () => {
+    const mock = createMockContext(athleteUser);
+    mock.prisma.athlete.findUnique.mockResolvedValue({
+      id: "athlete-1",
+      userId: athleteUser.id,
+    } as any);
+
+    await expect(
+      athleteResolvers.Query.athlete(null, { id: "athlete-1" }, asContext(mock)),
+    ).resolves.toEqual({ id: "athlete-1", userId: athleteUser.id });
+  });
+
+  it("lança ForbiddenError para ATHLETE consultando outro atleta", async () => {
+    const mock = createMockContext(athleteUser);
+    mock.prisma.athlete.findUnique.mockResolvedValue({
+      id: "athlete-2",
+      userId: "outro-user",
+    } as any);
+
+    await expect(
+      athleteResolvers.Query.athlete(null, { id: "athlete-2" }, asContext(mock)),
+    ).rejects.toThrow(ForbiddenError);
+  });
+});
+
 describe("athleteResolvers.Mutation.createAthlete", () => {
   it("cria o User e o Athlete vinculado", async () => {
     const mock = createMockContext();

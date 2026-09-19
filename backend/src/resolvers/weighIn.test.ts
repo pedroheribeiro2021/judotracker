@@ -3,6 +3,59 @@ import { ForbiddenError } from "apollo-server";
 import { weighInResolvers } from "./weighIn";
 import { createMockContext, athleteUser, asContext } from "../testUtils/mockContext";
 
+describe("weighInResolvers.Query.weighIns authz", () => {
+  it("permite COACH consultar pesagens de qualquer atleta", async () => {
+    const mock = createMockContext();
+    mock.prisma.weighIn.findMany.mockResolvedValue([]);
+
+    await weighInResolvers.Query.weighIns(
+      null,
+      { athleteId: "athlete-1" },
+      asContext(mock),
+    );
+
+    expect(mock.prisma.weighIn.findMany).toHaveBeenCalledWith({
+      where: { athleteId: "athlete-1" },
+      orderBy: { recordedAt: "desc" },
+    });
+  });
+
+  it("permite ATHLETE consultar as próprias pesagens", async () => {
+    const mock = createMockContext(athleteUser);
+    mock.prisma.athlete.findUnique.mockResolvedValue({
+      id: "athlete-1",
+      userId: athleteUser.id,
+    } as any);
+    mock.prisma.weighIn.findMany.mockResolvedValue([]);
+
+    await expect(
+      weighInResolvers.Query.weighIns(
+        null,
+        { athleteId: "athlete-1" },
+        asContext(mock),
+      ),
+    ).resolves.toEqual([]);
+  });
+
+  it("lança ForbiddenError para ATHLETE consultando pesagens de outro atleta", async () => {
+    const mock = createMockContext(athleteUser);
+    mock.prisma.athlete.findUnique.mockResolvedValue({
+      id: "athlete-2",
+      userId: "outro-user",
+    } as any);
+
+    await expect(
+      weighInResolvers.Query.weighIns(
+        null,
+        { athleteId: "athlete-2" },
+        asContext(mock),
+      ),
+    ).rejects.toThrow(ForbiddenError);
+
+    expect(mock.prisma.weighIn.findMany).not.toHaveBeenCalled();
+  });
+});
+
 describe("weighInResolvers.Mutation.recordWeighIn", () => {
   it("lança ForbiddenError para currentUser sem role COACH/ADMIN", async () => {
     const mock = createMockContext(athleteUser);

@@ -1,16 +1,16 @@
 // backend/src/resolvers/weighIn.ts
 import type { Context } from "../context";
-import { requireCoach } from "../context";
+import { requireCoach, requireSelfOrCoach } from "../context";
 
 export const weighInResolvers = {
   Query: {
-    // COACH only: weigh-ins
+    // COACH ou o próprio atleta: histórico de pesagens
     weighIns: async (
       _: any,
       { athleteId }: { athleteId: string },
       ctx: Context,
     ) => {
-      requireCoach(ctx);
+      await requireSelfOrCoach(ctx, athleteId);
       const rows = await ctx.prisma.weighIn.findMany({
         where: { athleteId },
         orderBy: { recordedAt: "desc" },

@@ -1,6 +1,6 @@
 // backend/src/resolvers/athlete.ts
 import type { Context } from "../context";
-import { requireCoach } from "../context";
+import { requireCoach, requireSelfOrCoach } from "../context";
 import { getAgeDivision, getWeightClass, Sex } from "../domain/weightClasses";
 
 async function getLastWeighInKg(parent: any, ctx: Context) {
@@ -25,9 +25,9 @@ export const athleteResolvers = {
       });
     },
 
-    // COACH only: single athlete detail
+    // COACH ou o próprio atleta: detalhe de um atleta
     athlete: async (_: any, { id }: { id: string }, ctx: Context) => {
-      requireCoach(ctx);
+      await requireSelfOrCoach(ctx, id);
       return ctx.prisma.athlete.findUnique({
         where: { id },
         include: {
