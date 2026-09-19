@@ -228,6 +228,41 @@ export const AthletePage: React.FC = () => {
           </>
         )}
 
+        {athlete?.attendanceStats && (
+          <Card>
+            <h2 className="font-semibold mb-3">Frequência nos treinos</h2>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+              <div>
+                <div className="text-sm text-slate-600">
+                  Presença (30 dias)
+                </div>
+                <div className="text-xl font-semibold mt-1">
+                  {athlete.attendanceStats.sessions30 > 0
+                    ? `${athlete.attendanceStats.rate30}%`
+                    : "-"}
+                </div>
+              </div>
+              <div>
+                <div className="text-sm text-slate-600">
+                  Presença (90 dias)
+                </div>
+                <div className="text-xl font-semibold mt-1">
+                  {athlete.attendanceStats.sessions90 > 0
+                    ? `${athlete.attendanceStats.rate90}%`
+                    : "-"}
+                </div>
+              </div>
+              <div>
+                <div className="text-sm text-slate-600">Sequência atual</div>
+                <div className="text-xl font-semibold mt-1">
+                  {athlete.attendanceStats.currentStreak} treino
+                  {athlete.attendanceStats.currentStreak !== 1 ? "s" : ""}
+                </div>
+              </div>
+            </div>
+          </Card>
+        )}
+
         {athlete && (
           <WeightChart athletes={[athlete]} allAthletes={[athlete]} />
         )}

@@ -73,6 +73,14 @@ export const Dashboard: React.FC = () => {
     return null;
   };
 
+  // "No mês" aproximado pela janela móvel de 30 dias já calculada no backend
+  // (attendanceStats.rate30), em vez de um segundo cálculo por mês-calendário.
+  // Exige ao menos uma sessão no período: sem sessões registradas não é
+  // "baixa presença", é ausência de dados.
+  const hasLowAttendance = (athlete: any) =>
+    athlete.attendanceStats?.sessions30 > 0 &&
+    athlete.attendanceStats.rate30 < 50;
+
   const computeAge = (dobValue?: string | number | null) => {
     if (dobValue == null) return "-";
     try {
@@ -202,6 +210,12 @@ export const Dashboard: React.FC = () => {
           className="text-[var(--brand-600)] hover:text-[var(--brand-800)] text-xs sm:text-sm font-medium transition"
         >
           Competições
+        </Link>
+        <Link
+          to="/trainings"
+          className="text-[var(--brand-600)] hover:text-[var(--brand-800)] text-xs sm:text-sm font-medium transition"
+        >
+          Treinos
         </Link>
         <span className="text-gray-700 text-xs sm:text-sm font-medium hidden sm:block">
           {user?.email}
@@ -338,6 +352,11 @@ export const Dashboard: React.FC = () => {
                         <div className="flex items-center gap-2 flex-wrap">
                           <span>{a.user?.name ?? a.user?.email}</span>
                           <BeltBadge rank={a.currentBelt} />
+                          {hasLowAttendance(a) && (
+                            <Badge variant="danger">
+                              Presença {a.attendanceStats.rate30}% no mês
+                            </Badge>
+                          )}
                         </div>
                       </td>
                       <td className="border border-gray-200 px-3 sm:px-4 py-2 sm:py-3 text-gray-600 text-sm hidden sm:table-cell">

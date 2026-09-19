@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { Dashboard } from "./pages/Dashboard";
 import { Competitions } from "./pages/Competitions";
 import { AthletePage } from "./pages/AthletePage";
+import { Trainings } from "./pages/Trainings";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import { Login } from "./pages/Login";
 
@@ -25,6 +26,7 @@ const AppInner: React.FC = () => {
         <Route path="/" element={<Dashboard />} />
         <Route path="/competitions" element={<Competitions />} />
         <Route path="/athletes/:id" element={<AthletePage />} />
+        <Route path="/trainings" element={<Trainings />} />
       </Routes>
     </BrowserRouter>
   );
