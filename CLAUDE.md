@@ -41,8 +41,9 @@ frontend/
     firebase/firebase.ts      # inicialização do Firebase client
 ```
 
-Modelos do schema Prisma ainda **sem UI/resolvers**: `Competition`, `Entry`,
-`BodyMeasurement`, `Media`, `Team`, `AuditLog`.
+Modelos do schema Prisma ainda **sem UI/resolvers**: `BodyMeasurement`,
+`Media`, `Team`, `AuditLog`, `Sport` (fundação multi-modalidade preparada
+em `docs/multi-sport.md`; hoje só judô é usado, sem UI de seleção).
 
 ## Convenções
 

@@ -1,4 +1,4 @@
-// backend/src/domain/beltRanks.ts
+// backend/src/domain/judo/beltRanks.ts
 //
 // Progressão oficial de faixas do judô brasileiro, conforme o "Regulamento
 // para Exame e Outorga de Faixas e Graus" da CBJ (Conselho Nacional de
