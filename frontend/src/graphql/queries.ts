@@ -402,3 +402,39 @@ export const DELETE_PROMOTION = gql`
     deletePromotion(id: $id)
   }
 `;
+
+export const GET_ATHLETE_STATS = gql`
+  query GetAthleteStats($athleteId: ID!) {
+    athleteStats(athleteId: $athleteId) {
+      totalMatches
+      wins
+      losses
+      draws
+      winRate
+      ipponWins
+      avgShidosPerMatch
+      scoreTypeDistribution {
+        scoreType
+        count
+      }
+      winsByScoreType {
+        scoreType
+        count
+      }
+      topTechniques {
+        technique
+        wins
+      }
+      medalsByType {
+        medal
+        count
+      }
+      performanceByWeightClass {
+        weightClass
+        entries
+        wins
+        losses
+      }
+    }
+  }
+`;
