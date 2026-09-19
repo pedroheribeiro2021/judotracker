@@ -3,7 +3,8 @@ import React, { useState } from "react";
 import { useMutation, useQuery } from "@apollo/client";
 import toast from "react-hot-toast";
 import { GET_ATHLETES, REGISTER_ENTRY } from "../graphql/queries";
-import { Button } from "../ui";
+import { Button, Badge } from "../ui";
+import { ConfirmDialog } from "./ConfirmDialog";
 
 type Props = {
   competitionId: string;
@@ -24,10 +25,15 @@ export const RegisterEntryForm: React.FC<Props> = ({
     Record<string, string>
   >({});
   const [submitting, setSubmitting] = useState(false);
+  const [showInjuryWarning, setShowInjuryWarning] = useState(false);
   const [registerEntry] = useMutation(REGISTER_ENTRY);
 
   const athletes = (data?.athletes ?? []).filter(
     (a: any) => !registeredAthleteIds.includes(a.id),
+  );
+
+  const injuredSelected = athletes.filter(
+    (a: any) => selected.has(a.id) && a.status === "INJURED",
   );
 
   const toggle = (athlete: any) => {
@@ -53,6 +59,16 @@ export const RegisterEntryForm: React.FC<Props> = ({
       toast.error("Selecione ao menos um atleta");
       return;
     }
+    // Bloqueio suave: avisa sobre atletas lesionados, mas não impede a
+    // inscrição — quem decide é o treinador.
+    if (injuredSelected.length > 0) {
+      setShowInjuryWarning(true);
+      return;
+    }
+    await doSubmit();
+  };
+
+  const doSubmit = async () => {
     setSubmitting(true);
     try {
       await Promise.all(
@@ -77,6 +93,7 @@ export const RegisterEntryForm: React.FC<Props> = ({
   };
 
   return (
+    <>
     <form onSubmit={handleSubmit} className="space-y-4">
       {loading && <div>Carregando atletas...</div>}
       {error && <div className="text-danger-500">Erro ao carregar atletas</div>}
@@ -102,9 +119,12 @@ export const RegisterEntryForm: React.FC<Props> = ({
                     checked={isSelected}
                     onChange={() => toggle(a)}
                   />
-                  <span className="text-sm">
+                  <span className="text-sm flex items-center gap-2">
                     {a.user?.name ?? a.user?.email}{" "}
                     {a.defaultWeightKg ? `(${a.defaultWeightKg} kg)` : ""}
+                    {a.status === "INJURED" && (
+                      <Badge variant="danger">Lesionado</Badge>
+                    )}
                   </span>
                 </label>
                 {isSelected && (
@@ -137,6 +157,22 @@ export const RegisterEntryForm: React.FC<Props> = ({
         </Button>
       </div>
     </form>
+
+    <ConfirmDialog
+      isOpen={showInjuryWarning}
+      onClose={() => setShowInjuryWarning(false)}
+      onConfirm={async () => {
+        setShowInjuryWarning(false);
+        await doSubmit();
+      }}
+      title="Atleta(s) lesionado(s)"
+      message={`${injuredSelected
+        .map((a: any) => a.user?.name ?? a.user?.email)
+        .join(", ")} está(ão) com lesão ativa. Deseja inscrever mesmo assim?`}
+      confirmText="Inscrever mesmo assim"
+      cancelText="Cancelar"
+    />
+    </>
   );
 };
 

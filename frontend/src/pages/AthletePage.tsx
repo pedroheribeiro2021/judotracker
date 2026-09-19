@@ -1,7 +1,7 @@
 // frontend/src/pages/AthletePage.tsx
-import React from "react";
+import React, { useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { useQuery } from "@apollo/client";
+import { useMutation, useQuery } from "@apollo/client";
 import {
   PieChart,
   Pie,
@@ -16,12 +16,21 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import { format } from "date-fns";
-import { GET_ATHLETE, GET_ATHLETE_STATS } from "../graphql/queries";
-import { Card, Avatar, Badge } from "../ui";
+import toast from "react-hot-toast";
+import {
+  GET_ATHLETE,
+  GET_ATHLETE_STATS,
+  GET_INJURIES,
+  RESOLVE_INJURY,
+} from "../graphql/queries";
+import { Card, Avatar, Badge, Button } from "../ui";
+import { Modal } from "../ui/components/Modal";
 import { BeltBadge } from "../components/BeltBadge";
+import { InjuryForm } from "../components/InjuryForm";
 import WeightChart from "../components/WeightChart";
 import { AGE_DIVISION_LABELS } from "../domain/ageDivisions";
 import { SCORE_TYPE_LABELS, ScoreType, MEDAL_EMOJI, Medal } from "../domain/matchEnums";
+import { INJURY_SEVERITY_LABELS, InjurySeverity } from "../domain/injuries";
 
 // Cores fixas por scoreType (identidade, não ranking) — mesma ordem de
 // SCORE_TYPES em domain/matchEnums.ts, nunca reatribuídas por posição no
@@ -57,12 +66,16 @@ const KpiCard: React.FC<{ label: string; value: React.ReactNode }> = ({
 export const AthletePage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
 
-  const { data: athleteData, loading: athleteLoading, error: athleteError } =
-    useQuery(GET_ATHLETE, {
-      variables: { id },
-      skip: !id,
-      fetchPolicy: "network-only",
-    });
+  const {
+    data: athleteData,
+    loading: athleteLoading,
+    error: athleteError,
+    refetch: refetchAthlete,
+  } = useQuery(GET_ATHLETE, {
+    variables: { id },
+    skip: !id,
+    fetchPolicy: "network-only",
+  });
 
   const { data: statsData, loading: statsLoading, error: statsError } = useQuery(
     GET_ATHLETE_STATS,
@@ -73,8 +86,33 @@ export const AthletePage: React.FC = () => {
     },
   );
 
+  const [openInjuryForm, setOpenInjuryForm] = useState(false);
+
+  const {
+    data: injuriesData,
+    loading: injuriesLoading,
+    refetch: refetchInjuries,
+  } = useQuery(GET_INJURIES, {
+    variables: { athleteId: id },
+    skip: !id,
+    fetchPolicy: "network-only",
+  });
+  const [resolveInjury] = useMutation(RESOLVE_INJURY);
+
   const athlete = athleteData?.athlete;
   const stats = statsData?.athleteStats;
+  const injuries = injuriesData?.injuries ?? [];
+
+  const handleResolveInjury = async (injuryId: string) => {
+    try {
+      await resolveInjury({ variables: { id: injuryId } });
+      toast.success("Lesão marcada como resolvida");
+      refetchInjuries();
+      refetchAthlete();
+    } catch (err: any) {
+      toast.error(err?.message ?? "Erro ao atualizar lesão");
+    }
+  };
 
   const pieData = (stats?.winsByScoreType ?? []).map((s: any) => ({
     name: SCORE_TYPE_LABELS[s.scoreType as ScoreType] ?? s.scoreType,
@@ -116,6 +154,9 @@ export const AthletePage: React.FC = () => {
                 {athlete.user?.name ?? athlete.user?.email}
               </h1>
               <div className="flex flex-wrap items-center gap-2 mt-2">
+                {athlete.status === "INJURED" && (
+                  <Badge variant="danger">Lesionado</Badge>
+                )}
                 {athlete.currentBelt && <BeltBadge rank={athlete.currentBelt} />}
                 {athlete.currentWeightClass && (
                   <Badge>{athlete.currentWeightClass}</Badge>
@@ -305,7 +346,100 @@ export const AthletePage: React.FC = () => {
             )}
           </Card>
         )}
+
+        {athlete && (
+          <Card>
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="font-semibold">Lesões</h2>
+              <Button size="sm" onClick={() => setOpenInjuryForm(true)}>
+                + Registrar lesão
+              </Button>
+            </div>
+            {injuriesLoading && (
+              <div className="text-sm text-text-muted">
+                Carregando lesões...
+              </div>
+            )}
+            {!injuriesLoading && injuries.length === 0 && (
+              <div className="text-sm text-text-muted">
+                Nenhuma lesão registrada.
+              </div>
+            )}
+            {injuries.length > 0 && (
+              <ul className="divide-y">
+                {injuries.map((injury: any) => {
+                  const isActive = !injury.resolvedAt;
+                  return (
+                    <li key={injury.id} className="py-3">
+                      <div className="flex items-start justify-between gap-2 flex-wrap">
+                        <div>
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="font-medium text-sm">
+                              {injury.bodyPart}
+                            </span>
+                            <Badge variant={isActive ? "danger" : "default"}>
+                              {isActive ? "Ativa" : "Resolvida"}
+                            </Badge>
+                            <Badge>
+                              {INJURY_SEVERITY_LABELS[
+                                injury.severity as InjurySeverity
+                              ] ?? injury.severity}
+                            </Badge>
+                          </div>
+                          <div className="text-sm text-text-muted mt-1">
+                            {injury.description}
+                          </div>
+                          <div className="text-xs text-text-muted mt-1">
+                            Ocorrida em {safeFormatDate(injury.occurredAt)}
+                            {injury.expectedReturn
+                              ? ` · Retorno previsto ${safeFormatDate(injury.expectedReturn)}`
+                              : ""}
+                            {injury.resolvedAt
+                              ? ` · Resolvida em ${safeFormatDate(injury.resolvedAt)}`
+                              : ""}
+                          </div>
+                          {injury.notes && (
+                            <div className="text-xs text-text-muted mt-1">
+                              {injury.notes}
+                            </div>
+                          )}
+                        </div>
+                        {isActive && (
+                          <Button
+                            size="sm"
+                            variant="secondary"
+                            onClick={() => handleResolveInjury(injury.id)}
+                          >
+                            Marcar como resolvida
+                          </Button>
+                        )}
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </Card>
+        )}
       </main>
+
+      <Modal
+        open={openInjuryForm}
+        onClose={() => setOpenInjuryForm(false)}
+        title="Registrar lesão"
+      >
+        {athlete && (
+          <InjuryForm
+            athleteId={athlete.id}
+            onSuccess={() => {
+              setOpenInjuryForm(false);
+              refetchInjuries();
+              refetchAthlete();
+            }}
+            onCancel={() => setOpenInjuryForm(false)}
+          />
+        )}
+      </Modal>
     </div>
   );
 };

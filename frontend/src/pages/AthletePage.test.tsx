@@ -3,7 +3,12 @@ import { render, screen } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { MockedProvider, MockedResponse } from "@apollo/client/testing";
 import AthletePage from "./AthletePage";
-import { GET_ATHLETE, GET_ATHLETE_STATS, GET_WEIGHINS } from "../graphql/queries";
+import {
+  GET_ATHLETE,
+  GET_ATHLETE_STATS,
+  GET_WEIGHINS,
+  GET_INJURIES,
+} from "../graphql/queries";
 
 function renderPage(mocks: MockedResponse[]) {
   return render(
@@ -31,6 +36,14 @@ const athleteMock: MockedResponse = {
         currentWeightClass: "-73",
         lastWeighInKg: 73,
         currentBelt: "BLACK_1DAN",
+        status: "ACTIVE",
+        attendanceStats: {
+          rate30: 75,
+          rate90: 80,
+          currentStreak: 2,
+          sessions30: 4,
+          sessions90: 10,
+        },
         user: { id: "user-1", email: "joao@example.com", name: "João Silva" },
         coach: null,
         createdAt: "2025-01-01T00:00:00.000Z",
@@ -61,6 +74,27 @@ const weighInsMock: MockedResponse = {
   result: { data: { weighIns: [] } },
 };
 
+const injuriesMock: MockedResponse = {
+  request: { query: GET_INJURIES, variables: { athleteId: "athlete-1" } },
+  result: {
+    data: {
+      injuries: [
+        {
+          id: "injury-1",
+          athleteId: "athlete-1",
+          bodyPart: "Joelho direito",
+          description: "Entorse no randori",
+          occurredAt: "2026-01-10T00:00:00.000Z",
+          expectedReturn: null,
+          resolvedAt: null,
+          severity: "MODERATE",
+          notes: null,
+        },
+      ],
+    },
+  },
+};
+
 const statsMock: MockedResponse = {
   request: { query: GET_ATHLETE_STATS, variables: { athleteId: "athlete-1" } },
   result: {
@@ -87,7 +121,7 @@ const statsMock: MockedResponse = {
 
 describe("AthletePage", () => {
   it("mostra o header do atleta e os KPIs de estatísticas", async () => {
-    renderPage([athleteMock, statsMock, weighInsMock]);
+    renderPage([athleteMock, statsMock, weighInsMock, injuriesMock]);
 
     expect(await screen.findByText("João Silva")).toBeInTheDocument();
     expect(await screen.findByText("Lutas")).toBeInTheDocument();
@@ -97,10 +131,20 @@ describe("AthletePage", () => {
   });
 
   it("mostra a linha do tempo de competições", async () => {
-    renderPage([athleteMock, statsMock, weighInsMock]);
+    renderPage([athleteMock, statsMock, weighInsMock, injuriesMock]);
 
     expect(
       await screen.findByText(/Copa São Paulo de Judô/),
+    ).toBeInTheDocument();
+  });
+
+  it("mostra a seção de lesões com a lesão ativa destacada", async () => {
+    renderPage([athleteMock, statsMock, weighInsMock, injuriesMock]);
+
+    expect(await screen.findByText("Joelho direito")).toBeInTheDocument();
+    expect(screen.getByText("Ativa")).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Marcar como resolvida" }),
     ).toBeInTheDocument();
   });
 });

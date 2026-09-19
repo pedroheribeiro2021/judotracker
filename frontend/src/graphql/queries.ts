@@ -18,6 +18,7 @@ export const GET_ATHLETES = gql`
       currentWeightClass
       lastWeighInKg
       currentBelt
+      status
       attendanceStats {
         rate30
         rate90
@@ -57,6 +58,7 @@ export const GET_ATHLETE = gql`
       currentWeightClass
       lastWeighInKg
       currentBelt
+      status
       attendanceStats {
         rate30
         rate90
@@ -494,6 +496,47 @@ export const SET_ATTENDANCE = gql`
       id
       athleteId
       present
+    }
+  }
+`;
+
+export const GET_INJURIES = gql`
+  query GetInjuries($athleteId: ID!, $activeOnly: Boolean) {
+    injuries(athleteId: $athleteId, activeOnly: $activeOnly) {
+      id
+      athleteId
+      bodyPart
+      description
+      occurredAt
+      expectedReturn
+      resolvedAt
+      severity
+      notes
+    }
+  }
+`;
+
+export const RECORD_INJURY = gql`
+  mutation RecordInjury($input: RecordInjuryInput!) {
+    recordInjury(input: $input) {
+      id
+      athleteId
+      bodyPart
+      description
+      occurredAt
+      expectedReturn
+      resolvedAt
+      severity
+      notes
+    }
+  }
+`;
+
+export const RESOLVE_INJURY = gql`
+  mutation ResolveInjury($id: ID!, $resolvedAt: String) {
+    resolveInjury(id: $id, resolvedAt: $resolvedAt) {
+      id
+      resolvedAt
     }
   }
 `;
