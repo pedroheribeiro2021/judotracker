@@ -39,6 +39,7 @@ model Athlete {
   bodyMeasurements BodyMeasurement[]
   entries         Entry[]
   promotions      Promotion[]
+  attendances     Attendance[]
   createdAt       DateTime         @default(now())
 
   Media Media[]
@@ -47,12 +48,13 @@ model Athlete {
 }
 
 model Coach {
-  id        String   @id @default(uuid())
-  user      User     @relation(fields: [userId], references: [id])
-  userId    String   @unique
-  teamId    String?
-  athletes  Athlete[]
-  createdAt DateTime @default(now())
+  id               String   @id @default(uuid())
+  user             User     @relation(fields: [userId], references: [id])
+  userId           String   @unique
+  teamId           String?
+  athletes         Athlete[]
+  createdAt        DateTime @default(now())
+  trainingSessions TrainingSession[]
 
   Team Team[]
 }
@@ -200,6 +202,37 @@ model Promotion {
   promotedBy String?
   notes      String?
   createdAt  DateTime @default(now())
+}
+
+enum TrainingType {
+  TECHNICAL
+  RANDORI
+  PHYSICAL
+  KATA
+  COMPETITION_PREP
+}
+
+model TrainingSession {
+  id              String       @id @default(uuid())
+  date            DateTime
+  type            TrainingType
+  durationMinutes Int
+  coach           Coach?       @relation(fields: [coachId], references: [id])
+  coachId         String?
+  notes           String?
+  attendances     Attendance[]
+  createdAt       DateTime     @default(now())
+}
+
+model Attendance {
+  id        String          @id @default(uuid())
+  session   TrainingSession @relation(fields: [sessionId], references: [id])
+  sessionId String
+  athlete   Athlete         @relation(fields: [athleteId], references: [id])
+  athleteId String
+  present   Boolean         @default(true)
+
+  @@unique([sessionId, athleteId])
 }
 
 model Media {

@@ -18,6 +18,13 @@ export const GET_ATHLETES = gql`
       currentWeightClass
       lastWeighInKg
       currentBelt
+      attendanceStats {
+        rate30
+        rate90
+        currentStreak
+        sessions30
+        sessions90
+      }
       coach {
         id
         user {
@@ -50,6 +57,13 @@ export const GET_ATHLETE = gql`
       currentWeightClass
       lastWeighInKg
       currentBelt
+      attendanceStats {
+        rate30
+        rate90
+        currentStreak
+        sessions30
+        sessions90
+      }
       user {
         id
         email
@@ -435,6 +449,51 @@ export const GET_ATHLETE_STATS = gql`
         wins
         losses
       }
+    }
+  }
+`;
+
+export const GET_TRAINING_SESSIONS = gql`
+  query GetTrainingSessions($from: String, $to: String) {
+    trainingSessions(from: $from, to: $to) {
+      id
+      date
+      type
+      durationMinutes
+      notes
+      attendances {
+        id
+        athleteId
+        present
+      }
+    }
+  }
+`;
+
+export const CREATE_TRAINING_SESSION = gql`
+  mutation CreateTrainingSession($input: CreateTrainingSessionInput!) {
+    createTrainingSession(input: $input) {
+      id
+      date
+      type
+      durationMinutes
+      notes
+    }
+  }
+`;
+
+export const DELETE_TRAINING_SESSION = gql`
+  mutation DeleteTrainingSession($id: ID!) {
+    deleteTrainingSession(id: $id)
+  }
+`;
+
+export const SET_ATTENDANCE = gql`
+  mutation SetAttendance($sessionId: ID!, $athleteIds: [ID!]!) {
+    setAttendance(sessionId: $sessionId, athleteIds: $athleteIds) {
+      id
+      athleteId
+      present
     }
   }
 `;
