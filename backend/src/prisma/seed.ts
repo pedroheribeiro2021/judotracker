@@ -140,6 +140,31 @@ async function main() {
     ],
   });
 
+  const DAY_MS = 24 * 60 * 60 * 1000;
+  const now = Date.now();
+  const trainingSessions = await Promise.all(
+    [2, 9, 16, 23].map((daysAgo, i) =>
+      prisma.trainingSession.create({
+        data: {
+          date: new Date(now - daysAgo * DAY_MS),
+          type: ["RANDORI", "TECHNICAL", "PHYSICAL", "RANDORI"][i] as any,
+          durationMinutes: 90,
+          notes: i === 0 ? "Foco em newaza" : undefined,
+        },
+      }),
+    ),
+  );
+
+  // Presente nas 3 sessões mais recentes, ausente na mais antiga (demonstra
+  // taxa de presença e sequência atual no card de frequência do atleta).
+  await prisma.attendance.createMany({
+    data: trainingSessions.slice(0, 3).map((s) => ({
+      sessionId: s.id,
+      athleteId: athlete.id,
+      present: true,
+    })),
+  });
+
   console.log("Seed complete.");
 }
 

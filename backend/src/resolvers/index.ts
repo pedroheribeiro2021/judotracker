@@ -7,6 +7,7 @@ import { competitionResolvers } from "./competition";
 import { matchResolvers } from "./match";
 import { promotionResolvers } from "./promotion";
 import { athleteStatsResolvers } from "./athleteStats";
+import { trainingResolvers } from "./training";
 
 export const resolvers = {
   Query: {
@@ -18,6 +19,7 @@ export const resolvers = {
     ...matchResolvers.Query,
     ...promotionResolvers.Query,
     ...athleteStatsResolvers.Query,
+    ...trainingResolvers.Query,
   },
   Mutation: {
     ...athleteResolvers.Mutation,
@@ -26,15 +28,19 @@ export const resolvers = {
     ...competitionResolvers.Mutation,
     ...matchResolvers.Mutation,
     ...promotionResolvers.Mutation,
+    ...trainingResolvers.Mutation,
   },
   User: userResolvers.User,
   Athlete: {
     ...athleteResolvers.Athlete,
     ...promotionResolvers.Athlete,
+    ...trainingResolvers.Athlete,
   },
   Coach: coachResolvers.Coach,
   Competition: competitionResolvers.Competition,
   Entry: { ...competitionResolvers.Entry, ...matchResolvers.Entry },
   Match: matchResolvers.Match,
   Promotion: promotionResolvers.Promotion,
+  TrainingSession: trainingResolvers.TrainingSession,
+  Attendance: trainingResolvers.Attendance,
 };
