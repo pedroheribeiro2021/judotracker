@@ -1,7 +1,7 @@
 // backend/src/resolvers/athlete.ts
 import type { Context } from "../context";
 import { requireCoach, requireSelfOrCoach } from "../context";
-import { getAgeDivision, getWeightClass, Sex } from "../domain/weightClasses";
+import { getAgeDivision, getWeightClass, Sex } from "../domain/judo/weightClasses";
 
 async function getLastWeighInKg(parent: any, ctx: Context) {
   const lastWeighIn = await ctx.prisma.weighIn.findFirst({

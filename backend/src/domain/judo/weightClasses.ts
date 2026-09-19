@@ -1,4 +1,4 @@
-// backend/src/domain/weightClasses.ts
+// backend/src/domain/judo/weightClasses.ts
 //
 // Categorias de peso oficiais do judô brasileiro (CBJ), conforme "Tabelas de
 // Classes e Categorias" publicadas pelas federações estaduais (ex.: FPJ

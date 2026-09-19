@@ -7,6 +7,20 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// Fundação multi-modalidade (preparação; hoje só o judô é semeado/usado —
+// ver docs/multi-sport.md e backend/src/domain/sports/). `sportId` nas
+// tabelas abaixo tem default fixo para o judô, então nada muda no
+// comportamento atual até existir uma UI de seleção de esporte.
+model Sport {
+  id   String @id @default(uuid())
+  name String
+  slug String @unique
+
+  teams            Team[]
+  competitions     Competition[]
+  trainingSessions TrainingSession[]
+}
+
 enum Role {
   ATHLETE
   COACH
@@ -63,6 +77,8 @@ model Coach {
 model Team {
   id       String   @id @default(uuid())
   name     String
+  sport    Sport    @relation(fields: [sportId], references: [id])
+  sportId  String   @default("a0000000-0000-4000-8000-000000000001")
   coaches  Coach[]
   athletes Athlete[]
 }
@@ -108,6 +124,8 @@ model Competition {
   registrationDeadline DateTime?
   notes                String?
   entries              Entry[]
+  sport                Sport             @relation(fields: [sportId], references: [id])
+  sportId              String            @default("a0000000-0000-4000-8000-000000000001")
 }
 
 enum Medal {
@@ -223,6 +241,8 @@ model TrainingSession {
   notes           String?
   attendances     Attendance[]
   createdAt       DateTime     @default(now())
+  sport           Sport        @relation(fields: [sportId], references: [id])
+  sportId         String       @default("a0000000-0000-4000-8000-000000000001")
 }
 
 model Attendance {
