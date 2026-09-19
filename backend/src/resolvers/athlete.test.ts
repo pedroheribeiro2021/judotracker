@@ -176,6 +176,12 @@ describe("athleteResolvers.Mutation.deleteAthlete", () => {
     expect(mock.prisma.promotion.deleteMany).toHaveBeenCalledWith({
       where: { athleteId: "athlete-1" },
     });
+    expect(mock.prisma.attendance.deleteMany).toHaveBeenCalledWith({
+      where: { athleteId: "athlete-1" },
+    });
+    expect(mock.prisma.injury.deleteMany).toHaveBeenCalledWith({
+      where: { athleteId: "athlete-1" },
+    });
     expect(mock.prisma.athlete.delete).toHaveBeenCalledWith({
       where: { id: "athlete-1" },
     });

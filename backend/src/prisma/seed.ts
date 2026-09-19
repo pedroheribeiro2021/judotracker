@@ -165,6 +165,19 @@ async function main() {
     })),
   });
 
+  await prisma.injury.create({
+    data: {
+      athleteId: athlete.id,
+      bodyPart: "Joelho direito",
+      description: "Entorse leve durante randori",
+      occurredAt: new Date(now - 60 * DAY_MS),
+      expectedReturn: new Date(now - 40 * DAY_MS),
+      resolvedAt: new Date(now - 38 * DAY_MS),
+      severity: "MINOR",
+      notes: "Liberado pelo fisioterapeuta",
+    },
+  });
+
   console.log("Seed complete.");
 }
 
