@@ -6,3 +6,8 @@ export { Avatar } from "./components/Avatar";
 export { Badge } from "./components/Badge";
 export { Table } from "./components/Table";
 export { FormRow } from "./components/FormRow";
+export { MonthCalendar } from "./components/MonthCalendar";
+export type {
+  CalendarEvent,
+  CalendarEventTone,
+} from "./components/MonthCalendar";

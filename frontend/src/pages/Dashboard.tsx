@@ -370,8 +370,7 @@ export const Dashboard: React.FC = () => {
                         {(() => {
                           const alert = getWeightCutAlert(a);
                           return alert ? (
-                            <Badge variant="danger">
-                              {" "}
+                            <Badge variant="danger" className="ml-3">
                               {formatWeightCutMessage(
                                 alert.excess,
                                 alert.weightClass,

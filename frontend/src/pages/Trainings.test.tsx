@@ -49,6 +49,8 @@ describe("Trainings", () => {
     renderPage([sessionsMock]);
 
     expect(await screen.findByText("Randori")).toBeInTheDocument();
+    // weekStart é sempre segunda-feira: o dia deve sair em português.
+    expect(screen.getByText(/^Segunda-feira, /)).toBeInTheDocument();
     expect(screen.getByText(/90 min/)).toBeInTheDocument();
     expect(screen.getByText(/1 presentes/)).toBeInTheDocument();
   });
