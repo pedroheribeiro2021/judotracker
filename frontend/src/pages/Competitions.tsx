@@ -9,7 +9,8 @@ import {
   GET_COMPETITIONS,
   REMOVE_ENTRY,
 } from "../graphql/queries";
-import { Badge, Button, Card } from "../ui";
+import { Badge, Button, Card, MonthCalendar } from "../ui";
+import type { CalendarEvent } from "../ui";
 import { Modal } from "../ui/components/Modal";
 import { ConfirmDialog } from "../components/ConfirmDialog";
 import { CompetitionForm } from "../components/CompetitionForm";
@@ -20,9 +21,12 @@ import {
   CompetitionLevel,
 } from "../domain/competitionLevels";
 import { MEDAL_EMOJI, Medal } from "../domain/matchEnums";
-import { formatWeightCutMessage, getWeightCutExcessKg } from "../domain/weightCut";
+import {
+  formatWeightCutMessage,
+  getWeightCutExcessKg,
+} from "../domain/weightCut";
 
-type Tab = "upcoming" | "past";
+type Tab = "upcoming" | "past" | "calendar";
 
 function safeFormat(value?: string | null, pattern = "dd/MM/yyyy") {
   if (!value) return "-";
@@ -112,9 +116,7 @@ const CompetitionCard: React.FC<{
           Inscritos ({competition.entries?.length ?? 0})
         </div>
         {(!competition.entries || competition.entries.length === 0) && (
-          <div className="text-sm text-text-muted">
-            Nenhum atleta inscrito.
-          </div>
+          <div className="text-sm text-text-muted">Nenhum atleta inscrito.</div>
         )}
         {competition.entries?.length > 0 && (
           <ul className="divide-y">
@@ -144,8 +146,7 @@ const CompetitionCard: React.FC<{
                         entry.athlete?.lastWeighInKg,
                       );
                       return excess != null ? (
-                        <Badge variant="danger">
-                          {" "}
+                        <Badge variant="danger" className="ml-3">
                           {formatWeightCutMessage(excess, entry.weightClass)}
                         </Badge>
                       ) : null;
@@ -174,9 +175,14 @@ const CompetitionCard: React.FC<{
 
 export const Competitions: React.FC = () => {
   const [tab, setTab] = useState<Tab>("upcoming");
+  const [calendarMonth, setCalendarMonth] = useState(new Date());
   const { data, loading, error, refetch } = useQuery(GET_COMPETITIONS, {
     variables:
-      tab === "upcoming" ? { upcoming: true } : { past: true },
+      tab === "upcoming"
+        ? { upcoming: true }
+        : tab === "past"
+          ? { past: true }
+          : {},
     fetchPolicy: "network-only",
   });
 
@@ -186,14 +192,42 @@ export const Competitions: React.FC = () => {
   const [openCreate, setOpenCreate] = useState(false);
   const [competitionToEdit, setCompetitionToEdit] = useState<any>(null);
   const [competitionToDelete, setCompetitionToDelete] = useState<any>(null);
-  const [competitionToRegister, setCompetitionToRegister] =
-    useState<any>(null);
+  const [competitionToRegister, setCompetitionToRegister] = useState<any>(null);
   const [summaryEntry, setSummaryEntry] = useState<{
     entry: any;
     competitionName: string;
   } | null>(null);
 
   const competitions = data?.competitions ?? [];
+
+  // No calendário cada competição gera o evento do dia da prova e, se houver,
+  // o do prazo de inscrição (id prefixado para diferenciar no clique).
+  const calendarEvents: CalendarEvent[] = competitions.flatMap((c: any) => {
+    const place = [c.city, c.state].filter(Boolean).join("/");
+    const level =
+      COMPETITION_LEVEL_LABELS[c.level as CompetitionLevel] ?? c.level ?? "";
+    const events: CalendarEvent[] = [
+      {
+        id: c.id,
+        date: new Date(c.date),
+        title: c.name,
+        subtitle: [level, place, `${c.entries?.length ?? 0} inscritos`]
+          .filter(Boolean)
+          .join(" · "),
+        tone: new Date(c.date) < new Date() ? "muted" : "brand",
+      },
+    ];
+    if (c.registrationDeadline) {
+      events.push({
+        id: `deadline:${c.id}`,
+        date: new Date(c.registrationDeadline),
+        title: `Prazo: ${c.name}`,
+        subtitle: "Último dia de inscrição",
+        tone: "danger",
+      });
+    }
+    return events;
+  });
 
   const handleConfirmDelete = async () => {
     if (!competitionToDelete) return;
@@ -228,9 +262,7 @@ export const Competitions: React.FC = () => {
             >
               ← Dashboard
             </Link>
-            <h1 className="text-2xl sm:text-3xl font-bold mt-2">
-              Competições
-            </h1>
+            <h1 className="text-2xl sm:text-3xl font-bold mt-2">Competições</h1>
           </div>
           <Button onClick={() => setOpenCreate(true)}>+ Competição</Button>
         </div>
@@ -244,7 +276,7 @@ export const Competitions: React.FC = () => {
                 : "border-transparent text-text-muted"
             }`}
           >
-            Calendário
+            Próximas
           </button>
           <button
             onClick={() => setTab("past")}
@@ -255,6 +287,16 @@ export const Competitions: React.FC = () => {
             }`}
           >
             Histórico
+          </button>
+          <button
+            onClick={() => setTab("calendar")}
+            className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px ${
+              tab === "calendar"
+                ? "border-[var(--brand-600)] text-[var(--brand-600)]"
+                : "border-transparent text-text-muted"
+            }`}
+          >
+            Calendário
           </button>
         </div>
       </header>
@@ -270,7 +312,20 @@ export const Competitions: React.FC = () => {
             Erro ao carregar competições
           </div>
         )}
-        {!loading && competitions.length === 0 && (
+        {tab === "calendar" && (
+          <MonthCalendar
+            month={calendarMonth}
+            onMonthChange={setCalendarMonth}
+            events={calendarEvents}
+            onEventClick={(id) => {
+              const competitionId = id.replace(/^deadline:/, "");
+              const c = competitions.find((x: any) => x.id === competitionId);
+              if (c) setCompetitionToEdit(c);
+            }}
+          />
+        )}
+
+        {tab !== "calendar" && !loading && competitions.length === 0 && (
           <div className="text-center py-8 text-text-muted text-sm">
             {tab === "upcoming"
               ? "Nenhuma competição futura cadastrada."
@@ -278,20 +333,21 @@ export const Competitions: React.FC = () => {
           </div>
         )}
 
-        {competitions.map((c: any) => (
-          <CompetitionCard
-            key={c.id}
-            competition={c}
-            tab={tab}
-            onEdit={() => setCompetitionToEdit(c)}
-            onDelete={() => setCompetitionToDelete(c)}
-            onRegister={() => setCompetitionToRegister(c)}
-            onRemoveEntry={handleRemoveEntry}
-            onOpenSummary={(entry) =>
-              setSummaryEntry({ entry, competitionName: c.name })
-            }
-          />
-        ))}
+        {tab !== "calendar" &&
+          competitions.map((c: any) => (
+            <CompetitionCard
+              key={c.id}
+              competition={c}
+              tab={tab}
+              onEdit={() => setCompetitionToEdit(c)}
+              onDelete={() => setCompetitionToDelete(c)}
+              onRegister={() => setCompetitionToRegister(c)}
+              onRemoveEntry={handleRemoveEntry}
+              onOpenSummary={(entry) =>
+                setSummaryEntry({ entry, competitionName: c.name })
+              }
+            />
+          ))}
       </main>
 
       <Modal

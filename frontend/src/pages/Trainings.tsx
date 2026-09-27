@@ -5,29 +5,50 @@ import { useMutation, useQuery } from "@apollo/client";
 import {
   startOfWeek,
   endOfWeek,
+  startOfMonth,
+  endOfMonth,
   addWeeks,
   subWeeks,
   format,
 } from "date-fns";
+import { ptBR } from "date-fns/locale";
 import toast from "react-hot-toast";
 import {
   GET_TRAINING_SESSIONS,
   DELETE_TRAINING_SESSION,
 } from "../graphql/queries";
-import { Button, Card, Badge } from "../ui";
+import { Button, Card, Badge, MonthCalendar } from "../ui";
 import { Modal } from "../ui/components/Modal";
 import { ConfirmDialog } from "../components/ConfirmDialog";
 import { TrainingSessionForm } from "../components/TrainingSessionForm";
 import { AttendanceRollCall } from "../components/AttendanceRollCall";
 import { TRAINING_TYPE_LABELS, TrainingType } from "../domain/trainingTypes";
 
+type View = "week" | "month";
+
+function formatSessionDate(date: string) {
+  const s = format(new Date(date), "EEEE, dd/MM/yyyy HH:mm", { locale: ptBR });
+  return s.charAt(0).toUpperCase() + s.slice(1);
+}
+
 export const Trainings: React.FC = () => {
+  const [view, setView] = useState<View>("week");
   const [weekAnchor, setWeekAnchor] = useState(new Date());
+  const [month, setMonth] = useState(new Date());
   const weekStart = startOfWeek(weekAnchor, { weekStartsOn: 1 });
   const weekEnd = endOfWeek(weekAnchor, { weekStartsOn: 1 });
+  // A grade do mês inclui dias das semanas vizinhas; buscamos esse intervalo.
+  const rangeStart =
+    view === "week"
+      ? weekStart
+      : startOfWeek(startOfMonth(month), { weekStartsOn: 1 });
+  const rangeEnd =
+    view === "week"
+      ? weekEnd
+      : endOfWeek(endOfMonth(month), { weekStartsOn: 1 });
 
   const { data, loading, error, refetch } = useQuery(GET_TRAINING_SESSIONS, {
-    variables: { from: weekStart.toISOString(), to: weekEnd.toISOString() },
+    variables: { from: rangeStart.toISOString(), to: rangeEnd.toISOString() },
     fetchPolicy: "network-only",
   });
 
@@ -67,25 +88,48 @@ export const Trainings: React.FC = () => {
           <Button onClick={() => setOpenCreate(true)}>+ Sessão</Button>
         </div>
 
-        <div className="flex items-center gap-3 mt-6">
-          <Button
-            size="sm"
-            variant="secondary"
-            onClick={() => setWeekAnchor((d) => subWeeks(d, 1))}
-          >
-            ← Semana anterior
-          </Button>
-          <div className="text-sm font-medium">
-            {format(weekStart, "dd/MM")} – {format(weekEnd, "dd/MM/yyyy")}
-          </div>
-          <Button
-            size="sm"
-            variant="secondary"
-            onClick={() => setWeekAnchor((d) => addWeeks(d, 1))}
-          >
-            Semana seguinte →
-          </Button>
+        <div className="flex gap-2 mt-6 border-b border-gray-200">
+          {(
+            [
+              ["week", "Semana"],
+              ["month", "Mês"],
+            ] as const
+          ).map(([v, label]) => (
+            <button
+              key={v}
+              onClick={() => setView(v)}
+              className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px ${
+                view === v
+                  ? "border-[var(--brand-600)] text-[var(--brand-600)]"
+                  : "border-transparent text-text-muted"
+              }`}
+            >
+              {label}
+            </button>
+          ))}
         </div>
+
+        {view === "week" && (
+          <div className="flex items-center gap-3 mt-4 flex-wrap">
+            <Button
+              size="sm"
+              variant="secondary"
+              onClick={() => setWeekAnchor((d) => subWeeks(d, 1))}
+            >
+              ← Semana anterior
+            </Button>
+            <div className="text-sm font-medium">
+              {format(weekStart, "dd/MM")} – {format(weekEnd, "dd/MM/yyyy")}
+            </div>
+            <Button
+              size="sm"
+              variant="secondary"
+              onClick={() => setWeekAnchor((d) => addWeeks(d, 1))}
+            >
+              Semana seguinte →
+            </Button>
+          </div>
+        )}
       </header>
 
       <main className="max-w-5xl mx-auto px-4 sm:px-6 pb-10">
@@ -99,58 +143,93 @@ export const Trainings: React.FC = () => {
             Erro ao carregar sessões
           </div>
         )}
-        {!loading && sessions.length === 0 && (
+        {view === "month" && (
+          <MonthCalendar
+            month={month}
+            onMonthChange={setMonth}
+            events={sessions.map((s: any) => ({
+              id: s.id,
+              date: new Date(s.date),
+              title: `${format(new Date(s.date), "HH:mm")} ${
+                TRAINING_TYPE_LABELS[s.type as TrainingType] ?? s.type
+              }`,
+              subtitle: [
+                `${s.durationMinutes} min`,
+                s.attendances.filter((a: any) => a.present).length > 0
+                  ? `${s.attendances.filter((a: any) => a.present).length} presentes`
+                  : null,
+                s.notes,
+              ]
+                .filter(Boolean)
+                .join(" · "),
+              tone: s.type === "COMPETITION_PREP" ? "danger" : "brand",
+            }))}
+            onEventClick={(id) =>
+              setRollCallSession(sessions.find((s: any) => s.id === id) ?? null)
+            }
+          />
+        )}
+
+        {view === "week" && !loading && sessions.length === 0 && (
           <div className="text-center py-8 text-text-muted text-sm">
             Nenhuma sessão de treino nesta semana.
           </div>
         )}
 
-        <div className="space-y-3">
-          {[...sessions]
-            .sort(
-              (a: any, b: any) =>
-                new Date(a.date).getTime() - new Date(b.date).getTime(),
-            )
-            .map((session: any) => {
-              const presentCount = session.attendances.filter(
-                (a: any) => a.present,
-              ).length;
-              return (
-                <Card key={session.id}>
-                  <div className="flex flex-wrap items-center justify-between gap-3">
-                    <div>
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="font-semibold">
-                          {format(new Date(session.date), "EEEE, dd/MM/yyyy HH:mm")}
-                        </span>
-                        <Badge>
-                          {TRAINING_TYPE_LABELS[session.type as TrainingType] ??
-                            session.type}
-                        </Badge>
+        {view === "week" && (
+          <div className="space-y-3">
+            {[...sessions]
+              .sort(
+                (a: any, b: any) =>
+                  new Date(a.date).getTime() - new Date(b.date).getTime(),
+              )
+              .map((session: any) => {
+                const presentCount = session.attendances.filter(
+                  (a: any) => a.present,
+                ).length;
+                return (
+                  <Card key={session.id}>
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                      <div>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="font-semibold">
+                            {formatSessionDate(session.date)}
+                          </span>
+                          <Badge>
+                            {TRAINING_TYPE_LABELS[
+                              session.type as TrainingType
+                            ] ?? session.type}
+                          </Badge>
+                        </div>
+                        <div className="text-sm text-text-muted mt-1">
+                          {session.durationMinutes} min
+                          {presentCount > 0
+                            ? ` · ${presentCount} presentes`
+                            : ""}
+                          {session.notes ? ` · ${session.notes}` : ""}
+                        </div>
                       </div>
-                      <div className="text-sm text-text-muted mt-1">
-                        {session.durationMinutes} min
-                        {presentCount > 0 ? ` · ${presentCount} presentes` : ""}
-                        {session.notes ? ` · ${session.notes}` : ""}
+                      <div className="flex gap-2">
+                        <Button
+                          size="sm"
+                          onClick={() => setRollCallSession(session)}
+                        >
+                          Fazer chamada
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="danger"
+                          onClick={() => setSessionToDelete(session)}
+                        >
+                          Excluir
+                        </Button>
                       </div>
                     </div>
-                    <div className="flex gap-2">
-                      <Button size="sm" onClick={() => setRollCallSession(session)}>
-                        Fazer chamada
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="danger"
-                        onClick={() => setSessionToDelete(session)}
-                      >
-                        Excluir
-                      </Button>
-                    </div>
-                  </div>
-                </Card>
-              );
-            })}
-        </div>
+                  </Card>
+                );
+              })}
+          </div>
+        )}
       </main>
 
       <Modal
