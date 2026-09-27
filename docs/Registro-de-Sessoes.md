@@ -1,5 +1,33 @@
 # Registro de sessões — JudoTracker
 
+## 2026-09-27 (tarde) — Revisão mobile e bugs de exibição
+
+**Objetivo**: revisar o staging em largura de celular (375px) e corrigir o
+que o primeiro uso real revelou.
+
+**Alterações (PR #30)**
+- `frontend/vercel.json`: rewrite de SPA. F5 ou link direto em rotas
+  internas davam 404 da Vercel.
+- `domain/dates.ts`: datas "só dia" exibidas a partir do UTC. No fuso de
+  Brasília apareciam um dia antes (nascimento, prova, prazo, graduação, lesão).
+- `tailwind.config.js`: tokens `surface`/`text` mapeados para
+  `ui/tokens/colors.css`. 61 usos de classes sem CSS gerado.
+- Dashboard em cartões no celular; badges de peso com `gap`; navegação de
+  semana compacta; números com vírgula decimal; eixo do gráfico com inteiros.
+- Dados: horários dos treinos do seed corrigidos (16h → 19h).
+
+**Decisões**: manter um único frontend na Vercel (`judotracker-web-staging`,
+branch `develop`). O `judotracker-web` será excluído manualmente.
+
+**Aprendizados**
+- A revisão mobile via Chrome funciona carregando o app num `iframe` de
+  375px na mesma origem: a sessão do Firebase é compartilhada e o zoom do
+  navegador não interfere.
+- Datas sem horário gravadas como meia-noite UTC precisam ser exibidas pelos
+  componentes UTC. Formulários devem mandar `YYYY-MM-DD` (o
+  `CompetitionForm` já faz isso).
+
+
 ## 2026-09-19 → 2026-09-27 — Staging novo (Supabase + Vercel)
 
 **Objetivo**: o frontend de staging dava HTTP 400 porque o backend antigo
@@ -50,4 +78,4 @@ mudanças no `rachaconta` foram aditivas e restritas ao schema `judotracker`
   só de API.
 
 **Pendências / próximos passos**: ver `Pendencias.md`. O próximo passo é a
-revisão mobile, depois do merge do PR #28.
+revisão mobile, depois do merge do PR #28 (feita na sessão seguinte, acima).

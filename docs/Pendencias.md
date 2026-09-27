@@ -5,12 +5,12 @@ Atualizado em 2026-09-27. Item concluído sai daqui e vai para o
 
 ## Em andamento
 
-- [ ] **Merge do PR #28** (calendário em treinos e competições, dia da semana
-  em pt-BR, margem dos badges de peso).
-- [ ] **Revisão mobile no staging**: navegar por todas as telas em largura de
-  celular e corrigir o que quebrar. Já conhecidos: a tabela do Dashboard força
-  `min-w-[700px]` (rolagem horizontal no celular; trocar por cartões abaixo de
-  `sm`); só 13 de 33 componentes têm ajustes responsivos.
+- [ ] **Excluir o projeto `judotracker-web` na Vercel** (ação manual do Pedro;
+  a trava de segurança do Claude Code bloqueia exclusões). Ele publica a
+  `main` apontando para `localhost:4000` e gera builds a cada push.
+- [ ] Filtro "Próximas/Histórico" de competições no backend compara com
+  `now()` em UTC: uma prova muda para o histórico ~3h antes da meia-noite de
+  Brasília. Baixa prioridade.
 
 ## Infra / configuração
 
