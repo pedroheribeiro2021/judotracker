@@ -6,6 +6,8 @@ import { AthletePage } from "./pages/AthletePage";
 import { Trainings } from "./pages/Trainings";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import { Login } from "./pages/Login";
+import { InstallHint } from "./components/InstallHint";
+import { OfflineBanner } from "./components/OfflineBanner";
 
 const AppInner: React.FC = () => {
   const { token, loading } = useAuth();
@@ -34,7 +36,9 @@ const AppInner: React.FC = () => {
 
 const App: React.FC = () => (
   <AuthProvider>
+    <OfflineBanner />
     <AppInner />
+    <InstallHint />
   </AuthProvider>
 );
 

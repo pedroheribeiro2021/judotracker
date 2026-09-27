@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="112" fill="#4f46e5"/>
+  
+  <g transform="translate(256 256) scale(1) translate(-256 -262)">
+    <!-- jaqueta -->
+    <path d="M126 178 L206 128 L256 170 L306 128 L386 178 L372 396 L140 396 Z" fill="#ffffff"/>
+    <!-- mangas (sombra leve nos ombros) -->
+    <path d="M126 178 L150 226 L158 396 L140 396 Z" fill="#e0e7ff"/>
+    <path d="M386 178 L362 226 L354 396 L372 396 Z" fill="#e0e7ff"/>
+    <!-- lapela esquerda (por baixo) -->
+    <path d="M198 132 L224 124 L304 294 L272 294 Z" fill="#c7d2fe"/>
+    <!-- lapela direita (por cima) -->
+    <path d="M314 132 L288 124 L208 294 L240 294 Z" fill="#a5b4fc"/>
+    <!-- faixa preta -->
+    <rect x="140" y="288" width="232" height="38" fill="#111827"/>
+    <!-- nó -->
+    <rect x="234" y="280" width="44" height="54" rx="8" fill="#0b0f1a"/>
+    <!-- pontas da faixa -->
+    <path d="M242 328 L208 410 L236 418 L264 334 Z" fill="#111827"/>
+    <path d="M270 328 L298 416 L326 406 L290 330 Z" fill="#111827"/>
+  </g>
+</svg>
