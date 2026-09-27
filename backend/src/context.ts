@@ -1,9 +1,10 @@
 // backend/src/context.ts
 import { AuthenticationError, ForbiddenError } from "apollo-server";
-import { PrismaClient } from "@prisma/client";
+import type { PrismaClient } from "@prisma/client";
+import { prisma } from "./db";
 import { verifyFirebaseTokenAndGetUser, CurrentUser } from "./auth/index";
 
-export const prisma = new PrismaClient();
+export { prisma };
 
 export type Context = {
   prisma: PrismaClient;
