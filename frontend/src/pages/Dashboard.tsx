@@ -17,11 +17,43 @@ import {
 import toast from "react-hot-toast";
 import { differenceInYears } from "date-fns";
 import { Modal } from "../ui/components/Modal";
-import { parseISO } from "date-fns/parseISO";
+import { formatDecimal, toDateOnly } from "../domain/dates";
 import WeightChart from "../components/WeightChart";
 import CreateCoachForm from "../components/CreateCoachForm";
 import { ConfirmDialog } from "../components/ConfirmDialog";
 import { EditAthleteForm } from "../components/EditAthleteForm";
+
+const EditIcon = () => (
+  <svg
+    className="w-5 h-5"
+    fill="none"
+    stroke="currentColor"
+    viewBox="0 0 24 24"
+  >
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth={2}
+      d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+    />
+  </svg>
+);
+
+const DeleteIcon = () => (
+  <svg
+    className="w-5 h-5"
+    fill="none"
+    stroke="currentColor"
+    viewBox="0 0 24 24"
+  >
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth={2}
+      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+    />
+  </svg>
+);
 
 export const Dashboard: React.FC = () => {
   const { data, loading, error, refetch } = useQuery(GET_ATHLETES, {
@@ -81,33 +113,30 @@ export const Dashboard: React.FC = () => {
     athlete.attendanceStats?.sessions30 > 0 &&
     athlete.attendanceStats.rate30 < 50;
 
+  const weightCutBadge = (a: any) => {
+    const alert = getWeightCutAlert(a);
+    return alert ? (
+      <Badge variant="danger">
+        {formatWeightCutMessage(alert.excess, alert.weightClass)}
+      </Badge>
+    ) : null;
+  };
+
+  const statusBadges = (a: any) => (
+    <>
+      <BeltBadge rank={a.currentBelt} />
+      {a.status === "INJURED" && <Badge variant="danger">Lesionado</Badge>}
+      {hasLowAttendance(a) && (
+        <Badge variant="danger">
+          Presença {formatDecimal(a.attendanceStats.rate30)}% no mês
+        </Badge>
+      )}
+    </>
+  );
+
   const computeAge = (dobValue?: string | number | null) => {
-    if (dobValue == null) return "-";
-    try {
-      let parsed: Date | null = null;
-      if (typeof dobValue === "number") {
-        parsed = new Date(dobValue);
-      } else if (typeof dobValue === "string") {
-        if (/^\d+$/.test(dobValue)) {
-          parsed = new Date(Number(dobValue));
-        } else {
-          try {
-            parsed = parseISO(dobValue);
-            if (isNaN(parsed.getTime())) {
-              const alt = new Date(dobValue);
-              parsed = isNaN(alt.getTime()) ? null : alt;
-            }
-          } catch {
-            const alt = new Date(dobValue);
-            parsed = isNaN(alt.getTime()) ? null : alt;
-          }
-        }
-      }
-      if (!parsed || isNaN(parsed.getTime())) return "-";
-      return differenceInYears(new Date(), parsed);
-    } catch {
-      return "-";
-    }
+    const dob = toDateOnly(dobValue);
+    return dob ? differenceInYears(new Date(), dob) : "-";
   };
 
   const exportCSV = () => {
@@ -316,8 +345,65 @@ export const Dashboard: React.FC = () => {
             </div>
           )}
 
+          {/* Celular: cartões empilhados; a partir de sm, tabela */}
           {!loading && filtered?.length > 0 && (
-            <div className="overflow-x-auto -mx-4 sm:mx-0">
+            <ul className="sm:hidden -mx-4 divide-y divide-gray-100 border-t border-gray-100">
+              {filtered.map((a: any) => {
+                const age = computeAge(a.dob);
+                return (
+                  <li
+                    key={a.id}
+                    onClick={() => onRowClick(a.id)}
+                    className="px-4 py-3 cursor-pointer active:bg-[var(--surface-200)]"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0 space-y-1.5">
+                        <div className="font-medium text-gray-800">
+                          {a.user?.name ?? a.user?.email}
+                        </div>
+                        <div className="flex flex-wrap items-center gap-1.5">
+                          {statusBadges(a)}
+                        </div>
+                        <div className="text-sm text-gray-600">
+                          {[
+                            a.defaultWeightKg != null
+                              ? `${a.defaultWeightKg} kg`
+                              : null,
+                            age !== "-" ? `${age} anos` : null,
+                            a.coach?.user?.name,
+                          ]
+                            .filter(Boolean)
+                            .join(" · ")}
+                        </div>
+                        {weightCutBadge(a)}
+                      </div>
+                      <div className="flex gap-3 shrink-0 pt-0.5">
+                        <button
+                          onClick={(e) => handleEditClick(e, a)}
+                          className="text-[var(--brand-600)] hover:text-[var(--brand-800)] transition"
+                          title="Editar"
+                          aria-label={`Editar ${a.user?.name ?? "atleta"}`}
+                        >
+                          <EditIcon />
+                        </button>
+                        <button
+                          onClick={(e) => handleDeleteClick(e, a)}
+                          className="text-[var(--danger-500)] hover:text-red-700 transition"
+                          title="Excluir"
+                          aria-label={`Excluir ${a.user?.name ?? "atleta"}`}
+                        >
+                          <DeleteIcon />
+                        </button>
+                      </div>
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+
+          {!loading && filtered?.length > 0 && (
+            <div className="hidden sm:block overflow-x-auto">
               <table className="w-full table-auto border-collapse min-w-[700px]">
                 <thead>
                   <tr className="bg-[var(--surface-200)]">
@@ -351,33 +437,17 @@ export const Dashboard: React.FC = () => {
                       <td className="border border-gray-200 px-3 sm:px-4 py-2 sm:py-3 text-gray-800 text-sm">
                         <div className="flex items-center gap-2 flex-wrap">
                           <span>{a.user?.name ?? a.user?.email}</span>
-                          <BeltBadge rank={a.currentBelt} />
-                          {a.status === "INJURED" && (
-                            <Badge variant="danger">Lesionado</Badge>
-                          )}
-                          {hasLowAttendance(a) && (
-                            <Badge variant="danger">
-                              Presença {a.attendanceStats.rate30}% no mês
-                            </Badge>
-                          )}
+                          {statusBadges(a)}
                         </div>
                       </td>
                       <td className="border border-gray-200 px-3 sm:px-4 py-2 sm:py-3 text-gray-600 text-sm hidden sm:table-cell">
                         {a.heightCm ?? "-"}
                       </td>
                       <td className="border border-gray-200 px-3 sm:px-4 py-2 sm:py-3 text-gray-600 text-sm">
-                        {a.defaultWeightKg ?? "-"}
-                        {(() => {
-                          const alert = getWeightCutAlert(a);
-                          return alert ? (
-                            <Badge variant="danger" className="ml-3">
-                              {formatWeightCutMessage(
-                                alert.excess,
-                                alert.weightClass,
-                              )}
-                            </Badge>
-                          ) : null;
-                        })()}
+                        <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                          <span>{a.defaultWeightKg ?? "-"}</span>
+                          {weightCutBadge(a)}
+                        </div>
                       </td>
                       <td className="border border-gray-200 px-3 sm:px-4 py-2 sm:py-3 text-gray-600 text-sm hidden md:table-cell">
                         {computeAge(a.dob)}
@@ -392,38 +462,14 @@ export const Dashboard: React.FC = () => {
                             className="text-[var(--brand-600)] hover:text-[var(--brand-800)] transition"
                             title="Editar"
                           >
-                            <svg
-                              className="w-5 h-5"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                              />
-                            </svg>
+                            <EditIcon />
                           </button>
                           <button
                             onClick={(e) => handleDeleteClick(e, a)}
                             className="text-[var(--danger-500)] hover:text-red-700 transition"
                             title="Excluir"
                           >
-                            <svg
-                              className="w-5 h-5"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                              />
-                            </svg>
+                            <DeleteIcon />
                           </button>
                         </div>
                       </td>

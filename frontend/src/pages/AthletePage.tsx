@@ -15,7 +15,6 @@ import {
   CartesianGrid,
   ResponsiveContainer,
 } from "recharts";
-import { format } from "date-fns";
 import toast from "react-hot-toast";
 import {
   GET_ATHLETE,
@@ -28,6 +27,7 @@ import { Modal } from "../ui/components/Modal";
 import { BeltBadge } from "../components/BeltBadge";
 import { InjuryForm } from "../components/InjuryForm";
 import WeightChart from "../components/WeightChart";
+import { formatDateOnly, formatDecimal } from "../domain/dates";
 import { AGE_DIVISION_LABELS } from "../domain/ageDivisions";
 import { SCORE_TYPE_LABELS, ScoreType, MEDAL_EMOJI, Medal } from "../domain/matchEnums";
 import { INJURY_SEVERITY_LABELS, InjurySeverity } from "../domain/injuries";
@@ -44,14 +44,8 @@ const SCORE_TYPE_COLORS: Record<ScoreType, string> = {
   FUSEN_GACHI: "#F97316",
 };
 
-function safeFormatDate(value?: string | null, pattern = "dd/MM/yyyy") {
-  if (!value) return "-";
-  try {
-    return format(new Date(value), pattern);
-  } catch {
-    return "-";
-  }
-}
+// Todas as datas desta página são "só dia" (prova, lesões).
+const safeFormatDate = (value?: string | null) => formatDateOnly(value);
 
 const KpiCard: React.FC<{ label: string; value: React.ReactNode }> = ({
   label,
@@ -192,11 +186,11 @@ export const AthletePage: React.FC = () => {
                 label="Vitórias / Derrotas"
                 value={`${stats.wins} / ${stats.losses}`}
               />
-              <KpiCard label="Taxa de vitória" value={`${stats.winRate}%`} />
+              <KpiCard label="Taxa de vitória" value={`${formatDecimal(stats.winRate)}%`} />
               <KpiCard label="Vitórias por Ippon" value={stats.ipponWins} />
               <KpiCard
                 label="Média de shidos/luta"
-                value={stats.avgShidosPerMatch}
+                value={formatDecimal(stats.avgShidosPerMatch, 2)}
               />
               {stats.medalsByType.map((m: any) => (
                 <KpiCard
@@ -279,7 +273,7 @@ export const AthletePage: React.FC = () => {
                 </div>
                 <div className="text-xl font-semibold mt-1">
                   {athlete.attendanceStats.sessions30 > 0
-                    ? `${athlete.attendanceStats.rate30}%`
+                    ? `${formatDecimal(athlete.attendanceStats.rate30)}%`
                     : "-"}
                 </div>
               </div>
@@ -289,7 +283,7 @@ export const AthletePage: React.FC = () => {
                 </div>
                 <div className="text-xl font-semibold mt-1">
                   {athlete.attendanceStats.sessions90 > 0
-                    ? `${athlete.attendanceStats.rate90}%`
+                    ? `${formatDecimal(athlete.attendanceStats.rate90)}%`
                     : "-"}
                 </div>
               </div>

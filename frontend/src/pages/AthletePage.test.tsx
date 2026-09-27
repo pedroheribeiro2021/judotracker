@@ -127,7 +127,8 @@ describe("AthletePage", () => {
     expect(await screen.findByText("Lutas")).toBeInTheDocument();
     expect(screen.getByText("3")).toBeInTheDocument();
     expect(screen.getByText("2 / 1")).toBeInTheDocument();
-    expect(screen.getByText("66.7%")).toBeInTheDocument();
+    // pt-BR: vírgula decimal
+    expect(screen.getByText("66,7%")).toBeInTheDocument();
   });
 
   it("mostra a linha do tempo de competições", async () => {

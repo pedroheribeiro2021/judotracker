@@ -2,7 +2,8 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { useMutation, useQuery } from "@apollo/client";
-import { differenceInCalendarDays, format } from "date-fns";
+import { differenceInCalendarDays } from "date-fns";
+import { formatDateOnly, toDateOnly } from "../domain/dates";
 import toast from "react-hot-toast";
 import {
   DELETE_COMPETITION,
@@ -28,14 +29,8 @@ import {
 
 type Tab = "upcoming" | "past" | "calendar";
 
-function safeFormat(value?: string | null, pattern = "dd/MM/yyyy") {
-  if (!value) return "-";
-  try {
-    return format(new Date(value), pattern);
-  } catch {
-    return "-";
-  }
-}
+// Data da prova e prazo de inscrição são "só dia" (ver domain/dates).
+const safeFormat = (value?: string | null) => formatDateOnly(value);
 
 const CompetitionCard: React.FC<{
   competition: any;
@@ -57,7 +52,7 @@ const CompetitionCard: React.FC<{
   const deadlineDays =
     tab === "upcoming" && competition.registrationDeadline
       ? differenceInCalendarDays(
-          new Date(competition.registrationDeadline),
+          toDateOnly(competition.registrationDeadline)!,
           new Date(),
         )
       : null;
@@ -130,15 +125,17 @@ const CompetitionCard: React.FC<{
                   tab === "past" ? () => onOpenSummary(entry) : undefined
                 }
               >
-                <span>
-                  {entry.medal && entry.medal !== "NONE"
-                    ? `${MEDAL_EMOJI[entry.medal as Exclude<Medal, "NONE">]} `
-                    : ""}
-                  {entry.athlete?.user?.name ?? entry.athlete?.user?.email}
-                  {entry.weightClass ? ` · ${entry.weightClass}` : ""}
-                  {tab === "past" && entry.finalPosition
-                    ? ` · ${entry.finalPosition}º lugar`
-                    : ""}
+                <span className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                  <span>
+                    {entry.medal && entry.medal !== "NONE"
+                      ? `${MEDAL_EMOJI[entry.medal as Exclude<Medal, "NONE">]} `
+                      : ""}
+                    {entry.athlete?.user?.name ?? entry.athlete?.user?.email}
+                    {entry.weightClass ? ` · ${entry.weightClass}` : ""}
+                    {tab === "past" && entry.finalPosition
+                      ? ` · ${entry.finalPosition}º lugar`
+                      : ""}
+                  </span>
                   {tab === "upcoming" &&
                     (() => {
                       const excess = getWeightCutExcessKg(
@@ -146,7 +143,7 @@ const CompetitionCard: React.FC<{
                         entry.athlete?.lastWeighInKg,
                       );
                       return excess != null ? (
-                        <Badge variant="danger" className="ml-3">
+                        <Badge variant="danger">
                           {formatWeightCutMessage(excess, entry.weightClass)}
                         </Badge>
                       ) : null;
@@ -209,18 +206,21 @@ export const Competitions: React.FC = () => {
     const events: CalendarEvent[] = [
       {
         id: c.id,
-        date: new Date(c.date),
+        date: toDateOnly(c.date)!,
         title: c.name,
         subtitle: [level, place, `${c.entries?.length ?? 0} inscritos`]
           .filter(Boolean)
           .join(" · "),
-        tone: new Date(c.date) < new Date() ? "muted" : "brand",
+        tone:
+          differenceInCalendarDays(toDateOnly(c.date)!, new Date()) < 0
+            ? "muted"
+            : "brand",
       },
     ];
     if (c.registrationDeadline) {
       events.push({
         id: `deadline:${c.id}`,
-        date: new Date(c.registrationDeadline),
+        date: toDateOnly(c.registrationDeadline)!,
         title: `Prazo: ${c.name}`,
         subtitle: "Último dia de inscrição",
         tone: "danger",
