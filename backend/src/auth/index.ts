@@ -47,81 +47,14 @@ export async function verifyFirebaseTokenAndGetUser(
     );
   }
 
+  // Só a verificação do token vira "não autenticado". Falhas de banco daqui
+  // para baixo propagam como erro interno — antes eram engolidas pelo mesmo
+  // catch e apareciam na tela como "Not authenticated".
+  let decoded: Awaited<
+    ReturnType<ReturnType<typeof admin.auth>["verifyIdToken"]>
+  >;
   try {
-    const decoded = await admin.auth().verifyIdToken(token);
-    // decoded contains uid, email, name, etc.
-    const uid = decoded.uid;
-    const email = decoded.email ?? null;
-    const name = decoded.name ?? null;
-
-    // Determinar a role baseada no email
-    const desiredRole = COACH_EMAILS.includes(email || "")
-      ? "COACH"
-      : "ATHLETE";
-
-    // Buscar local user por firebaseUid
-    let localUser = await prisma.user.findUnique({
-      where: { firebaseUid: uid },
-    });
-
-    if (localUser) {
-      // Usuário existe - verificar se a role precisa ser atualizada
-      if (localUser.role !== desiredRole && desiredRole === "COACH") {
-        console.log(
-          `🔄 Atualizando role do usuário ${email} de ${localUser.role} para ${desiredRole}`,
-        );
-        localUser = await prisma.user.update({
-          where: { id: localUser.id },
-          data: { role: desiredRole },
-        });
-      }
-
-      return {
-        uid,
-        email,
-        name,
-        role: localUser.role,
-        id: localUser.id,
-      };
-    }
-
-    // Usuário não existe - criar novo
-    console.log(
-      `📝 Criando novo usuário: ${email} (${uid}) com role ${desiredRole}`,
-    );
-
-    try {
-      localUser = await prisma.user.create({
-        data: {
-          firebaseUid: uid,
-          email: email || "",
-          name: name,
-          role: desiredRole,
-          createdAt: new Date(),
-        },
-      });
-      console.log(
-        `✅ Usuário criado com sucesso: ${email} (${localUser.role})`,
-      );
-
-      return {
-        uid,
-        email,
-        name,
-        role: localUser.role,
-        id: localUser.id,
-      };
-    } catch (createError) {
-      console.error("❌ Erro ao criar usuário no banco:", createError);
-      // Se falhar ao criar, retorna usuário sem role (acesso negado)
-      return {
-        uid,
-        email,
-        name,
-        role: null,
-        id: null,
-      };
-    }
+    decoded = await admin.auth().verifyIdToken(token);
   } catch (err: any) {
     const payload = decodeJwtPayloadUnsafe(token);
     if (payload) {
@@ -139,5 +72,56 @@ export async function verifyFirebaseTokenAndGetUser(
       errorInfo: err?.errorInfo,
     });
     return null;
+  }
+
+  const uid = decoded.uid;
+  const email = decoded.email ?? null;
+  const name = decoded.name ?? null;
+
+  // Determinar a role baseada no email
+  const desiredRole = COACH_EMAILS.includes(email || "") ? "COACH" : "ATHLETE";
+
+  // Buscar local user por firebaseUid
+  let localUser = await prisma.user.findUnique({
+    where: { firebaseUid: uid },
+  });
+
+  if (localUser) {
+    // Usuário existe - verificar se a role precisa ser atualizada
+    if (localUser.role !== desiredRole && desiredRole === "COACH") {
+      console.log(
+        `🔄 Atualizando role do usuário ${email} de ${localUser.role} para ${desiredRole}`,
+      );
+      localUser = await prisma.user.update({
+        where: { id: localUser.id },
+        data: { role: desiredRole },
+      });
+    }
+
+    return { uid, email, name, role: localUser.role, id: localUser.id };
+  }
+
+  // Usuário não existe - criar novo
+  console.log(
+    `📝 Criando novo usuário: ${email} (${uid}) com role ${desiredRole}`,
+  );
+
+  try {
+    localUser = await prisma.user.create({
+      data: {
+        firebaseUid: uid,
+        email: email || "",
+        name: name,
+        role: desiredRole,
+        createdAt: new Date(),
+      },
+    });
+    console.log(`✅ Usuário criado com sucesso: ${email} (${localUser.role})`);
+
+    return { uid, email, name, role: localUser.role, id: localUser.id };
+  } catch (createError) {
+    console.error("❌ Erro ao criar usuário no banco:", createError);
+    // Se falhar ao criar, retorna usuário sem role (acesso negado)
+    return { uid, email, name, role: null, id: null };
   }
 }

@@ -14,6 +14,7 @@ async function buildApp() {
     typeDefs,
     resolvers,
     context: createContext,
+    cache: "bounded",
   });
   await server.start();
 
