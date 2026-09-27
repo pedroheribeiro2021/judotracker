@@ -109,14 +109,16 @@ export const Trainings: React.FC = () => {
           ))}
         </div>
 
+        {/* No celular os botões viram só setas, para caber numa linha */}
         {view === "week" && (
-          <div className="flex items-center gap-3 mt-4 flex-wrap">
+          <div className="flex items-center justify-between sm:justify-start gap-3 mt-4">
             <Button
               size="sm"
               variant="secondary"
               onClick={() => setWeekAnchor((d) => subWeeks(d, 1))}
+              aria-label="Semana anterior"
             >
-              ← Semana anterior
+              ←<span className="hidden sm:inline"> Semana anterior</span>
             </Button>
             <div className="text-sm font-medium">
               {format(weekStart, "dd/MM")} – {format(weekEnd, "dd/MM/yyyy")}
@@ -125,8 +127,9 @@ export const Trainings: React.FC = () => {
               size="sm"
               variant="secondary"
               onClick={() => setWeekAnchor((d) => addWeeks(d, 1))}
+              aria-label="Semana seguinte"
             >
-              Semana seguinte →
+              <span className="hidden sm:inline">Semana seguinte </span>→
             </Button>
           </div>
         )}

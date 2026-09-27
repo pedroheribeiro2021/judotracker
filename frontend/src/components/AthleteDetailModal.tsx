@@ -11,6 +11,7 @@ import {
 } from "../graphql/queries";
 import { Card, Button, Badge } from "../ui";
 import { format, differenceInMonths } from "date-fns";
+import { formatDateOnly, toDateOnly } from "../domain/dates";
 import toast from "react-hot-toast";
 import { EditAthleteForm } from "./EditAthleteForm";
 import { PromotionForm } from "./PromotionForm";
@@ -64,7 +65,7 @@ function safeFormat(dateVal?: string | number | null, pattern = "dd/MM/yyyy") {
 
 /** Tempo decorrido desde uma data, formatado como "1 ano e 3 meses" (indicador de carência). */
 function formatTenure(dateVal?: string | number | null): string | null {
-  const d = parseFlexibleDate(dateVal ?? null);
+  const d = toDateOnly(dateVal);
   if (!d) return null;
   const totalMonths = Math.max(0, differenceInMonths(new Date(), d));
   const years = Math.floor(totalMonths / 12);
@@ -217,7 +218,7 @@ export const AthleteDetailModal: React.FC<Props> = ({
                       Data de Nascimento
                     </div>
                     <div className="font-medium">
-                      {safeFormat(athlete.dob ?? null, "dd/MM/yyyy")}
+                      {formatDateOnly(athlete.dob)}
                     </div>
                   </Card>
                   <Card>
@@ -351,7 +352,7 @@ export const AthleteDetailModal: React.FC<Props> = ({
                             {entry.competition?.name}
                           </div>
                           <div className="text-slate-500">
-                            {safeFormat(entry.competition?.date ?? null)}
+                            {formatDateOnly(entry.competition?.date)}
                             {entry.competition?.location
                               ? ` · ${entry.competition.location}`
                               : ""}
@@ -396,7 +397,7 @@ export const AthleteDetailModal: React.FC<Props> = ({
                             <div className="flex items-center gap-2">
                               <BeltBadge rank={p.rank} />
                               <span className="text-slate-500">
-                                {safeFormat(p.promotedAt)}
+                                {formatDateOnly(p.promotedAt)}
                               </span>
                             </div>
                             <div className="text-slate-500 mt-1">

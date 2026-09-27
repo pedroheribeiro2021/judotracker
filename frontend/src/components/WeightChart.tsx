@@ -15,6 +15,7 @@ import {
 import { useQuery } from "@apollo/client";
 import { GET_WEIGHINS } from "../graphql/queries";
 import { format } from "date-fns";
+import { formatDecimal } from "../domain/dates";
 
 // Cores para as linhas de cada atleta
 const LINE_COLORS = [
@@ -154,9 +155,11 @@ const WeightChart: React.FC<Props> = ({ athletes, allAthletes }) => {
           Evolução de Peso
         </h2>
         <p className="text-sm text-gray-500 mb-6">
-          {athletes.length === allAthletes.length
-            ? "Todos os atletas"
-            : `${athletes.length} atleta${athletes.length !== 1 ? "s" : ""} filtrado${athletes.length !== 1 ? "s" : ""}`}
+          {allAthletes.length === 1
+            ? "Últimas pesagens"
+            : athletes.length === allAthletes.length
+              ? "Todos os atletas"
+              : `${athletes.length} atleta${athletes.length !== 1 ? "s" : ""} filtrado${athletes.length !== 1 ? "s" : ""}`}
         </p>
 
         {!hasData && (
@@ -181,8 +184,14 @@ const WeightChart: React.FC<Props> = ({ athletes, allAthletes }) => {
                 tick={{ fontSize: 11, fill: "#6b7280" }}
                 tickLine={false}
                 axisLine={false}
-                tickFormatter={(v) => `${v}kg`}
-                domain={["auto", "auto"]}
+                tickFormatter={(v) => `${formatDecimal(v)} kg`}
+                // Limites inteiros: evita marcas como "93.45kg"
+                domain={[
+                  (min: number) => Math.floor(min - 0.5),
+                  (max: number) => Math.ceil(max + 0.5),
+                ]}
+                allowDecimals={false}
+                width={56}
               />
               <Tooltip
                 formatter={

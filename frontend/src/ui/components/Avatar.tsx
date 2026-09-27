@@ -10,14 +10,16 @@ export const Avatar: React.FC<{
   return (
     <div
       className={clsx(
-        "inline-flex items-center justify-center rounded-full overflow-hidden bg-surface-200",
-        sizes[size]
+        "inline-flex items-center justify-center rounded-full overflow-hidden bg-brand-100",
+        sizes[size],
       )}
     >
       {src ? (
         <img src={src} alt={alt} />
       ) : (
-        <span className="text-muted-500">{(alt ?? "U").slice(0, 1)}</span>
+        <span className="font-semibold text-brand-700">
+          {(alt ?? "U").slice(0, 1).toUpperCase()}
+        </span>
       )}
     </div>
   );
