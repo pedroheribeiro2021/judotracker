@@ -1,9 +1,7 @@
 // backend/src/auth/index.ts
 import admin from "../firebase/admin";
-import { PrismaClient } from "@prisma/client";
 import { ApolloError } from "apollo-server";
-
-const prisma = new PrismaClient();
+import { prisma } from "../db";
 
 function decodeJwtPayloadUnsafe(token: string): Record<string, unknown> | null {
   try {

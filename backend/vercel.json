@@ -1,5 +1,6 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "buildCommand": "prisma generate",
+  "buildCommand": "prisma generate && mkdir -p public && echo JudoTracker API - use /graphql > public/index.html",
+  "outputDirectory": "public",
   "rewrites": [{ "source": "/graphql", "destination": "/api/graphql" }]
 }
