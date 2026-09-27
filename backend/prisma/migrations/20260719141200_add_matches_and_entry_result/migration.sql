@@ -1,25 +1,25 @@
 -- CreateEnum
-CREATE TYPE "public"."Medal" AS ENUM ('GOLD', 'SILVER', 'BRONZE', 'NONE');
+CREATE TYPE "judotracker"."Medal" AS ENUM ('GOLD', 'SILVER', 'BRONZE', 'NONE');
 
 -- CreateEnum
-CREATE TYPE "public"."MatchResult" AS ENUM ('WIN', 'LOSS', 'DRAW');
+CREATE TYPE "judotracker"."MatchResult" AS ENUM ('WIN', 'LOSS', 'DRAW');
 
 -- CreateEnum
-CREATE TYPE "public"."ScoreType" AS ENUM ('IPPON', 'WAZA_ARI', 'WAZA_ARI_AWASETE_IPPON', 'DECISION', 'HANSOKU_MAKE', 'FUSEN_GACHI');
+CREATE TYPE "judotracker"."ScoreType" AS ENUM ('IPPON', 'WAZA_ARI', 'WAZA_ARI_AWASETE_IPPON', 'DECISION', 'HANSOKU_MAKE', 'FUSEN_GACHI');
 
 -- AlterTable
-ALTER TABLE "public"."Entry" ADD COLUMN     "finalPosition" INTEGER,
-ADD COLUMN     "medal" "public"."Medal";
+ALTER TABLE "judotracker"."Entry" ADD COLUMN     "finalPosition" INTEGER,
+ADD COLUMN     "medal" "judotracker"."Medal";
 
 -- CreateTable
-CREATE TABLE "public"."Match" (
+CREATE TABLE "judotracker"."Match" (
     "id" TEXT NOT NULL,
     "entryId" TEXT NOT NULL,
     "round" TEXT NOT NULL,
     "opponentName" TEXT NOT NULL,
     "opponentClub" TEXT,
-    "result" "public"."MatchResult" NOT NULL,
-    "scoreType" "public"."ScoreType",
+    "result" "judotracker"."MatchResult" NOT NULL,
+    "scoreType" "judotracker"."ScoreType",
     "technique" TEXT,
     "shidosFor" INTEGER NOT NULL DEFAULT 0,
     "shidosAgainst" INTEGER NOT NULL DEFAULT 0,
@@ -32,4 +32,4 @@ CREATE TABLE "public"."Match" (
 );
 
 -- AddForeignKey
-ALTER TABLE "public"."Match" ADD CONSTRAINT "Match_entryId_fkey" FOREIGN KEY ("entryId") REFERENCES "public"."Entry"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "judotracker"."Match" ADD CONSTRAINT "Match_entryId_fkey" FOREIGN KEY ("entryId") REFERENCES "judotracker"."Entry"("id") ON DELETE RESTRICT ON UPDATE CASCADE;

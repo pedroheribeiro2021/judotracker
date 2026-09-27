@@ -18,8 +18,11 @@ treinadores, controle de peso (pesagens) e autenticação por papel
 
 ```
 backend/
+  api/graphql.ts      # função serverless da Vercel (reaproveita src/app.ts)
+  vercel.json          # rewrite /graphql -> /api/graphql
   src/
-    index.ts          # bootstrap do ApolloServer (typeDefs + resolvers + context)
+    app.ts            # app Express + ApolloServer (typeDefs + resolvers + context)
+    index.ts          # servidor local (listen na porta 4000, /graphql)
     context.ts         # Context (prisma, currentUser), requireAuth/requireCoach, createContext
     schema/             # typeDefs por domínio (user, athlete, coach, weighIn) + root.ts
     resolvers/           # resolvers por domínio, mesclados em resolvers/index.ts
@@ -60,6 +63,10 @@ em `docs/multi-sport.md`; hoje só judô é usado, sem UI de seleção).
   coluna); só passe `null` quando o input explicitamente enviar `null`
   (ex.: desvincular `coachId`). Evite o padrão `input.campo || null`, que
   apaga o valor sempre que o campo não é enviado.
+- **Schema do banco**: tudo vive no schema Postgres `judotracker` (não
+  `public`), porque a staging divide um projeto Supabase com outros apps. Todo
+  model/enum novo leva `@@schema("judotracker")`, e migrations geradas devem
+  referenciar `"judotracker".`. Ver `docs/ADR/ADR-001-schema-dedicado-supabase.md`.
 - **Papéis de usuário**: hoje definidos por lista fixa `COACH_EMAILS` em
   `backend/src/auth/index.ts` (MVP). Se crescer, migrar para flag no banco
   ou custom claims do Firebase.
@@ -104,7 +111,7 @@ docker-compose up -d db   # sobe Postgres local na porta 5433
 
 ## Variáveis de ambiente
 
-- `backend/.env`: `DATABASE_URL`, `GOOGLE_APPLICATION_CREDENTIALS` (chave
+- `backend/.env`: `DATABASE_URL` (com `?schema=judotracker`), `GOOGLE_APPLICATION_CREDENTIALS` (chave
   de service account do Firebase — não versionar; ver `backend/keys/`,
   ignorado no git).
 - `frontend/.env`: `VITE_GRAPHQL_URL` + `VITE_FIREBASE_*` (config do

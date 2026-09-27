@@ -1,8 +1,8 @@
 -- CreateEnum
-CREATE TYPE "public"."CompetitionLevel" AS ENUM ('REGIONAL', 'ESTADUAL', 'NACIONAL', 'INTERNACIONAL');
+CREATE TYPE "judotracker"."CompetitionLevel" AS ENUM ('REGIONAL', 'ESTADUAL', 'NACIONAL', 'INTERNACIONAL');
 
 -- AlterTable
-ALTER TABLE "public"."Competition" ADD COLUMN     "level" "public"."CompetitionLevel",
+ALTER TABLE "judotracker"."Competition" ADD COLUMN     "level" "judotracker"."CompetitionLevel",
 ADD COLUMN     "federation" TEXT,
 ADD COLUMN     "city" TEXT,
 ADD COLUMN     "state" TEXT,

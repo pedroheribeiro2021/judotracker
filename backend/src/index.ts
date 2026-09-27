@@ -1,22 +1,11 @@
 // backend/src/index.ts
 import "dotenv/config";
-import { ApolloServer } from "apollo-server";
-import { typeDefs } from "./schema";
-import { resolvers } from "./resolvers";
-import { createContext } from "./context";
+import { getApp } from "./app";
 
-const server = new ApolloServer({
-  typeDefs,
-  resolvers,
-  context: createContext,
-  cors: {
-    origin: true,
-    credentials: true,
-  },
-});
+const port = Number(process.env.PORT) || 4000;
 
-server
-  .listen({ port: Number(process.env.PORT) || 4000, path: "/graphql" })
-  .then(({ url }) => {
-    console.log(`🚀 GraphQL server running at ${url}`);
+getApp().then((app) => {
+  app.listen(port, () => {
+    console.log(`🚀 GraphQL server running at http://localhost:${port}/graphql`);
   });
+});

@@ -5,6 +5,7 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+  schemas  = ["judotracker"]
 }
 
 // Fundação multi-modalidade (preparação; hoje só o judô é semeado/usado —
@@ -19,12 +20,16 @@ model Sport {
   teams            Team[]
   competitions     Competition[]
   trainingSessions TrainingSession[]
+
+  @@schema("judotracker")
 }
 
 enum Role {
   ATHLETE
   COACH
   ADMIN
+
+  @@schema("judotracker")
 }
 
 model User {
@@ -37,50 +42,58 @@ model User {
   createdAt    DateTime @default(now())
   athlete      Athlete?
   coach        Coach?
+
+  @@schema("judotracker")
 }
 
 model Athlete {
-  id              String           @id @default(uuid())
-  user            User             @relation(fields: [userId], references: [id])
-  userId          String           @unique
-  dob             DateTime?
-  sex             String?
-  heightCm        Float?
-  defaultWeightKg Float?
-  coach           Coach?           @relation(fields: [coachId], references: [id])
-  coachId         String?
-  weighIns        WeighIn[]
+  id               String            @id @default(uuid())
+  user             User              @relation(fields: [userId], references: [id])
+  userId           String            @unique
+  dob              DateTime?
+  sex              String?
+  heightCm         Float?
+  defaultWeightKg  Float?
+  coach            Coach?            @relation(fields: [coachId], references: [id])
+  coachId          String?
+  weighIns         WeighIn[]
   bodyMeasurements BodyMeasurement[]
-  entries         Entry[]
-  promotions      Promotion[]
-  attendances     Attendance[]
-  injuries        Injury[]
-  createdAt       DateTime         @default(now())
+  entries          Entry[]
+  promotions       Promotion[]
+  attendances      Attendance[]
+  injuries         Injury[]
+  createdAt        DateTime          @default(now())
 
   Media Media[]
 
   Team Team[]
+
+  @@schema("judotracker")
 }
 
 model Coach {
-  id               String   @id @default(uuid())
-  user             User     @relation(fields: [userId], references: [id])
-  userId           String   @unique
+  id               String            @id @default(uuid())
+  user             User              @relation(fields: [userId], references: [id])
+  userId           String            @unique
   teamId           String?
   athletes         Athlete[]
-  createdAt        DateTime @default(now())
+  createdAt        DateTime          @default(now())
   trainingSessions TrainingSession[]
 
   Team Team[]
+
+  @@schema("judotracker")
 }
 
 model Team {
-  id       String   @id @default(uuid())
+  id       String    @id @default(uuid())
   name     String
-  sport    Sport    @relation(fields: [sportId], references: [id])
-  sportId  String   @default("a0000000-0000-4000-8000-000000000001")
+  sport    Sport     @relation(fields: [sportId], references: [id])
+  sportId  String    @default("a0000000-0000-4000-8000-000000000001")
   coaches  Coach[]
   athletes Athlete[]
+
+  @@schema("judotracker")
 }
 
 model WeighIn {
@@ -92,6 +105,8 @@ model WeighIn {
   method     String?
   notes      String?
   createdAt  DateTime @default(now())
+
+  @@schema("judotracker")
 }
 
 model BodyMeasurement {
@@ -103,6 +118,8 @@ model BodyMeasurement {
   hipCm     Float?
   date      DateTime
   createdAt DateTime @default(now())
+
+  @@schema("judotracker")
 }
 
 enum CompetitionLevel {
@@ -110,6 +127,8 @@ enum CompetitionLevel {
   ESTADUAL
   NACIONAL
   INTERNACIONAL
+
+  @@schema("judotracker")
 }
 
 model Competition {
@@ -126,6 +145,8 @@ model Competition {
   entries              Entry[]
   sport                Sport             @relation(fields: [sportId], references: [id])
   sportId              String            @default("a0000000-0000-4000-8000-000000000001")
+
+  @@schema("judotracker")
 }
 
 enum Medal {
@@ -133,6 +154,8 @@ enum Medal {
   SILVER
   BRONZE
   NONE
+
+  @@schema("judotracker")
 }
 
 model Entry {
@@ -147,12 +170,16 @@ model Entry {
   finalPosition Int?
   medal         Medal?
   matches       Match[]
+
+  @@schema("judotracker")
 }
 
 enum MatchResult {
   WIN
   LOSS
   DRAW
+
+  @@schema("judotracker")
 }
 
 enum ScoreType {
@@ -162,6 +189,8 @@ enum ScoreType {
   DECISION
   HANSOKU_MAKE
   FUSEN_GACHI
+
+  @@schema("judotracker")
 }
 
 model Match {
@@ -180,6 +209,8 @@ model Match {
   durationSeconds Int?
   notes           String?
   createdAt       DateTime    @default(now())
+
+  @@schema("judotracker")
 }
 
 // Progressão oficial de faixas do judô brasileiro (CBJ, Regulamento para
@@ -210,6 +241,8 @@ enum BeltRank {
   RED_WHITE_8DAN
   RED_9DAN
   RED_10DAN
+
+  @@schema("judotracker")
 }
 
 model Promotion {
@@ -221,6 +254,8 @@ model Promotion {
   promotedBy String?
   notes      String?
   createdAt  DateTime @default(now())
+
+  @@schema("judotracker")
 }
 
 enum TrainingType {
@@ -229,6 +264,8 @@ enum TrainingType {
   PHYSICAL
   KATA
   COMPETITION_PREP
+
+  @@schema("judotracker")
 }
 
 model TrainingSession {
@@ -243,6 +280,8 @@ model TrainingSession {
   createdAt       DateTime     @default(now())
   sport           Sport        @relation(fields: [sportId], references: [id])
   sportId         String       @default("a0000000-0000-4000-8000-000000000001")
+
+  @@schema("judotracker")
 }
 
 model Attendance {
@@ -254,12 +293,15 @@ model Attendance {
   present   Boolean         @default(true)
 
   @@unique([sessionId, athleteId])
+  @@schema("judotracker")
 }
 
 enum InjurySeverity {
   MINOR
   MODERATE
   SEVERE
+
+  @@schema("judotracker")
 }
 
 model Injury {
@@ -274,6 +316,8 @@ model Injury {
   severity       InjurySeverity
   notes          String?
   createdAt      DateTime       @default(now())
+
+  @@schema("judotracker")
 }
 
 model Media {
@@ -284,6 +328,8 @@ model Media {
   key       String
   metadata  Json?
   createdAt DateTime @default(now())
+
+  @@schema("judotracker")
 }
 
 model AuditLog {
@@ -292,4 +338,6 @@ model AuditLog {
   actorId   String?
   details   Json?
   createdAt DateTime @default(now())
+
+  @@schema("judotracker")
 }

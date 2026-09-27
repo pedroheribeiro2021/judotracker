@@ -3,7 +3,9 @@
     "target": "ES2022",
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
-    "types": ["node"],
+    "types": [
+      "node"
+    ],
     "rootDir": "src",
     "outDir": "dist",
     "strict": true,
@@ -11,5 +13,10 @@
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true
   },
-  "exclude": ["vitest.config.ts"]
+  "exclude": [
+    "vitest.config.ts"
+  ],
+  "include": [
+    "src"
+  ]
 }

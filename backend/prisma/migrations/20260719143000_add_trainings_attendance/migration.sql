@@ -1,11 +1,11 @@
 -- CreateEnum
-CREATE TYPE "public"."TrainingType" AS ENUM ('TECHNICAL', 'RANDORI', 'PHYSICAL', 'KATA', 'COMPETITION_PREP');
+CREATE TYPE "judotracker"."TrainingType" AS ENUM ('TECHNICAL', 'RANDORI', 'PHYSICAL', 'KATA', 'COMPETITION_PREP');
 
 -- CreateTable
-CREATE TABLE "public"."TrainingSession" (
+CREATE TABLE "judotracker"."TrainingSession" (
     "id" TEXT NOT NULL,
     "date" TIMESTAMP(3) NOT NULL,
-    "type" "public"."TrainingType" NOT NULL,
+    "type" "judotracker"."TrainingType" NOT NULL,
     "durationMinutes" INTEGER NOT NULL,
     "coachId" TEXT,
     "notes" TEXT,
@@ -15,7 +15,7 @@ CREATE TABLE "public"."TrainingSession" (
 );
 
 -- CreateTable
-CREATE TABLE "public"."Attendance" (
+CREATE TABLE "judotracker"."Attendance" (
     "id" TEXT NOT NULL,
     "sessionId" TEXT NOT NULL,
     "athleteId" TEXT NOT NULL,
@@ -25,13 +25,13 @@ CREATE TABLE "public"."Attendance" (
 );
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Attendance_sessionId_athleteId_key" ON "public"."Attendance"("sessionId", "athleteId");
+CREATE UNIQUE INDEX "Attendance_sessionId_athleteId_key" ON "judotracker"."Attendance"("sessionId", "athleteId");
 
 -- AddForeignKey
-ALTER TABLE "public"."TrainingSession" ADD CONSTRAINT "TrainingSession_coachId_fkey" FOREIGN KEY ("coachId") REFERENCES "public"."Coach"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE "judotracker"."TrainingSession" ADD CONSTRAINT "TrainingSession_coachId_fkey" FOREIGN KEY ("coachId") REFERENCES "judotracker"."Coach"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "public"."Attendance" ADD CONSTRAINT "Attendance_sessionId_fkey" FOREIGN KEY ("sessionId") REFERENCES "public"."TrainingSession"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "judotracker"."Attendance" ADD CONSTRAINT "Attendance_sessionId_fkey" FOREIGN KEY ("sessionId") REFERENCES "judotracker"."TrainingSession"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "public"."Attendance" ADD CONSTRAINT "Attendance_athleteId_fkey" FOREIGN KEY ("athleteId") REFERENCES "public"."Athlete"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "judotracker"."Attendance" ADD CONSTRAINT "Attendance_athleteId_fkey" FOREIGN KEY ("athleteId") REFERENCES "judotracker"."Athlete"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
