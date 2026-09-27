@@ -5,7 +5,7 @@
 
 */
 -- AlterTable
-ALTER TABLE "public"."User" ADD COLUMN     "firebaseUid" TEXT;
+ALTER TABLE "judotracker"."User" ADD COLUMN     "firebaseUid" TEXT;
 
 -- CreateIndex
-CREATE UNIQUE INDEX "User_firebaseUid_key" ON "public"."User"("firebaseUid");
+CREATE UNIQUE INDEX "User_firebaseUid_key" ON "judotracker"."User"("firebaseUid");

@@ -1,12 +1,15 @@
+-- Schema dedicado: o banco de staging (Supabase) é compartilhado com outros apps.
+CREATE SCHEMA IF NOT EXISTS "judotracker";
+
 -- CreateEnum
-CREATE TYPE "public"."Role" AS ENUM ('ATHLETE', 'COACH', 'ADMIN');
+CREATE TYPE "judotracker"."Role" AS ENUM ('ATHLETE', 'COACH', 'ADMIN');
 
 -- CreateTable
-CREATE TABLE "public"."User" (
+CREATE TABLE "judotracker"."User" (
     "id" TEXT NOT NULL,
     "email" TEXT NOT NULL,
     "name" TEXT,
-    "role" "public"."Role" NOT NULL DEFAULT 'ATHLETE',
+    "role" "judotracker"."Role" NOT NULL DEFAULT 'ATHLETE',
     "passwordHash" TEXT,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
@@ -14,7 +17,7 @@ CREATE TABLE "public"."User" (
 );
 
 -- CreateTable
-CREATE TABLE "public"."Athlete" (
+CREATE TABLE "judotracker"."Athlete" (
     "id" TEXT NOT NULL,
     "userId" TEXT NOT NULL,
     "dob" TIMESTAMP(3),
@@ -28,7 +31,7 @@ CREATE TABLE "public"."Athlete" (
 );
 
 -- CreateTable
-CREATE TABLE "public"."Coach" (
+CREATE TABLE "judotracker"."Coach" (
     "id" TEXT NOT NULL,
     "userId" TEXT NOT NULL,
     "teamId" TEXT,
@@ -38,7 +41,7 @@ CREATE TABLE "public"."Coach" (
 );
 
 -- CreateTable
-CREATE TABLE "public"."Team" (
+CREATE TABLE "judotracker"."Team" (
     "id" TEXT NOT NULL,
     "name" TEXT NOT NULL,
 
@@ -46,7 +49,7 @@ CREATE TABLE "public"."Team" (
 );
 
 -- CreateTable
-CREATE TABLE "public"."WeighIn" (
+CREATE TABLE "judotracker"."WeighIn" (
     "id" TEXT NOT NULL,
     "athleteId" TEXT NOT NULL,
     "weightKg" DOUBLE PRECISION NOT NULL,
@@ -59,7 +62,7 @@ CREATE TABLE "public"."WeighIn" (
 );
 
 -- CreateTable
-CREATE TABLE "public"."BodyMeasurement" (
+CREATE TABLE "judotracker"."BodyMeasurement" (
     "id" TEXT NOT NULL,
     "athleteId" TEXT NOT NULL,
     "heightCm" DOUBLE PRECISION,
@@ -72,7 +75,7 @@ CREATE TABLE "public"."BodyMeasurement" (
 );
 
 -- CreateTable
-CREATE TABLE "public"."Competition" (
+CREATE TABLE "judotracker"."Competition" (
     "id" TEXT NOT NULL,
     "name" TEXT NOT NULL,
     "date" TIMESTAMP(3) NOT NULL,
@@ -82,7 +85,7 @@ CREATE TABLE "public"."Competition" (
 );
 
 -- CreateTable
-CREATE TABLE "public"."Entry" (
+CREATE TABLE "judotracker"."Entry" (
     "id" TEXT NOT NULL,
     "competitionId" TEXT NOT NULL,
     "athleteId" TEXT NOT NULL,
@@ -94,7 +97,7 @@ CREATE TABLE "public"."Entry" (
 );
 
 -- CreateTable
-CREATE TABLE "public"."Media" (
+CREATE TABLE "judotracker"."Media" (
     "id" TEXT NOT NULL,
     "athleteId" TEXT,
     "type" TEXT NOT NULL,
@@ -106,7 +109,7 @@ CREATE TABLE "public"."Media" (
 );
 
 -- CreateTable
-CREATE TABLE "public"."AuditLog" (
+CREATE TABLE "judotracker"."AuditLog" (
     "id" TEXT NOT NULL,
     "action" TEXT NOT NULL,
     "actorId" TEXT,
@@ -117,7 +120,7 @@ CREATE TABLE "public"."AuditLog" (
 );
 
 -- CreateTable
-CREATE TABLE "public"."_AthleteToTeam" (
+CREATE TABLE "judotracker"."_AthleteToTeam" (
     "A" TEXT NOT NULL,
     "B" TEXT NOT NULL,
 
@@ -125,7 +128,7 @@ CREATE TABLE "public"."_AthleteToTeam" (
 );
 
 -- CreateTable
-CREATE TABLE "public"."_CoachToTeam" (
+CREATE TABLE "judotracker"."_CoachToTeam" (
     "A" TEXT NOT NULL,
     "B" TEXT NOT NULL,
 
@@ -133,52 +136,52 @@ CREATE TABLE "public"."_CoachToTeam" (
 );
 
 -- CreateIndex
-CREATE UNIQUE INDEX "User_email_key" ON "public"."User"("email");
+CREATE UNIQUE INDEX "User_email_key" ON "judotracker"."User"("email");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Athlete_userId_key" ON "public"."Athlete"("userId");
+CREATE UNIQUE INDEX "Athlete_userId_key" ON "judotracker"."Athlete"("userId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Coach_userId_key" ON "public"."Coach"("userId");
+CREATE UNIQUE INDEX "Coach_userId_key" ON "judotracker"."Coach"("userId");
 
 -- CreateIndex
-CREATE INDEX "_AthleteToTeam_B_index" ON "public"."_AthleteToTeam"("B");
+CREATE INDEX "_AthleteToTeam_B_index" ON "judotracker"."_AthleteToTeam"("B");
 
 -- CreateIndex
-CREATE INDEX "_CoachToTeam_B_index" ON "public"."_CoachToTeam"("B");
+CREATE INDEX "_CoachToTeam_B_index" ON "judotracker"."_CoachToTeam"("B");
 
 -- AddForeignKey
-ALTER TABLE "public"."Athlete" ADD CONSTRAINT "Athlete_userId_fkey" FOREIGN KEY ("userId") REFERENCES "public"."User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "judotracker"."Athlete" ADD CONSTRAINT "Athlete_userId_fkey" FOREIGN KEY ("userId") REFERENCES "judotracker"."User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "public"."Athlete" ADD CONSTRAINT "Athlete_coachId_fkey" FOREIGN KEY ("coachId") REFERENCES "public"."Coach"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE "judotracker"."Athlete" ADD CONSTRAINT "Athlete_coachId_fkey" FOREIGN KEY ("coachId") REFERENCES "judotracker"."Coach"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "public"."Coach" ADD CONSTRAINT "Coach_userId_fkey" FOREIGN KEY ("userId") REFERENCES "public"."User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "judotracker"."Coach" ADD CONSTRAINT "Coach_userId_fkey" FOREIGN KEY ("userId") REFERENCES "judotracker"."User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "public"."WeighIn" ADD CONSTRAINT "WeighIn_athleteId_fkey" FOREIGN KEY ("athleteId") REFERENCES "public"."Athlete"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "judotracker"."WeighIn" ADD CONSTRAINT "WeighIn_athleteId_fkey" FOREIGN KEY ("athleteId") REFERENCES "judotracker"."Athlete"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "public"."BodyMeasurement" ADD CONSTRAINT "BodyMeasurement_athleteId_fkey" FOREIGN KEY ("athleteId") REFERENCES "public"."Athlete"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "judotracker"."BodyMeasurement" ADD CONSTRAINT "BodyMeasurement_athleteId_fkey" FOREIGN KEY ("athleteId") REFERENCES "judotracker"."Athlete"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "public"."Entry" ADD CONSTRAINT "Entry_competitionId_fkey" FOREIGN KEY ("competitionId") REFERENCES "public"."Competition"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "judotracker"."Entry" ADD CONSTRAINT "Entry_competitionId_fkey" FOREIGN KEY ("competitionId") REFERENCES "judotracker"."Competition"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "public"."Entry" ADD CONSTRAINT "Entry_athleteId_fkey" FOREIGN KEY ("athleteId") REFERENCES "public"."Athlete"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "judotracker"."Entry" ADD CONSTRAINT "Entry_athleteId_fkey" FOREIGN KEY ("athleteId") REFERENCES "judotracker"."Athlete"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "public"."Media" ADD CONSTRAINT "Media_athleteId_fkey" FOREIGN KEY ("athleteId") REFERENCES "public"."Athlete"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE "judotracker"."Media" ADD CONSTRAINT "Media_athleteId_fkey" FOREIGN KEY ("athleteId") REFERENCES "judotracker"."Athlete"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "public"."_AthleteToTeam" ADD CONSTRAINT "_AthleteToTeam_A_fkey" FOREIGN KEY ("A") REFERENCES "public"."Athlete"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "judotracker"."_AthleteToTeam" ADD CONSTRAINT "_AthleteToTeam_A_fkey" FOREIGN KEY ("A") REFERENCES "judotracker"."Athlete"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "public"."_AthleteToTeam" ADD CONSTRAINT "_AthleteToTeam_B_fkey" FOREIGN KEY ("B") REFERENCES "public"."Team"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "judotracker"."_AthleteToTeam" ADD CONSTRAINT "_AthleteToTeam_B_fkey" FOREIGN KEY ("B") REFERENCES "judotracker"."Team"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "public"."_CoachToTeam" ADD CONSTRAINT "_CoachToTeam_A_fkey" FOREIGN KEY ("A") REFERENCES "public"."Coach"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "judotracker"."_CoachToTeam" ADD CONSTRAINT "_CoachToTeam_A_fkey" FOREIGN KEY ("A") REFERENCES "judotracker"."Coach"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "public"."_CoachToTeam" ADD CONSTRAINT "_CoachToTeam_B_fkey" FOREIGN KEY ("B") REFERENCES "public"."Team"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "judotracker"."_CoachToTeam" ADD CONSTRAINT "_CoachToTeam_B_fkey" FOREIGN KEY ("B") REFERENCES "judotracker"."Team"("id") ON DELETE CASCADE ON UPDATE CASCADE;
