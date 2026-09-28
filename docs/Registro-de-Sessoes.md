@@ -1,5 +1,32 @@
 # Registro de sessões — JudoTracker
 
+## 2026-09-27/28 — PWA e documentação para portfólio
+
+**Objetivo**: tornar o app instalável no celular e deixar a documentação pronta
+para uso como projeto de portfólio.
+
+**Alterações**
+- PR #32: PWA com `vite-plugin-pwa` (manifest pt-BR, service worker
+  `autoUpdate` que cacheia só o casco), ícone de judogi (192/512, maskable,
+  apple-touch-icon), meta tags do iOS, `InstallHint` (botão Instalar no
+  Android, instruções do Safari no iPhone) e `OfflineBanner`. Validado no
+  preview: service worker ativo, manifest e ícones servidos.
+- README reescrito em inglês (produto, stack, arquitetura, notas de
+  engenharia, como rodar); CLAUDE.md atualizado (staging, PWA, estrutura,
+  convenções de datas/cores/mobile/lockfile).
+- Manual do usuário (artifact) ganhou a seção de instalação no celular.
+- Vault: JudoTracker incluído em `Projetos/README.md`; caso de entrevista
+  atualizado em `Empregabilidade/Banco-Respostas-Entrevista.md`.
+
+**Decisões**: ícone do app é um judogi com faixa preta sobre o índigo da
+marca (escolha do Pedro: símbolo de judô). README em inglês porque a busca de
+emprego do Pedro prioriza vagas internacionais.
+
+**Aprendizados**: o `npm install` no Windows repetiu a remoção de entradas
+de esbuild de outras plataformas no lockfile; restauradas a partir do lock
+anterior (ver convenção no CLAUDE.md).
+
+
 ## 2026-09-27 (tarde) — Revisão mobile e bugs de exibição
 
 **Objetivo**: revisar o staging em largura de celular (375px) e corrigir o
