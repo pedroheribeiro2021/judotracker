@@ -1,6 +1,6 @@
 # Pendências — JudoTracker
 
-Atualizado em 2026-09-27. Item concluído sai daqui e vai para o
+Atualizado em 2026-09-28. Item concluído sai daqui e vai para o
 `Registro-de-Sessoes.md`.
 
 ## Em andamento
@@ -11,6 +11,15 @@ Atualizado em 2026-09-27. Item concluído sai daqui e vai para o
 - [ ] Filtro "Próximas/Histórico" de competições no backend compara com
   `now()` em UTC: uma prova muda para o histórico ~3h antes da meia-noite de
   Brasília. Baixa prioridade.
+
+## Portfólio
+
+- [ ] **Levar a `develop` para a `main`**: a `main` (branch padrão do GitHub) está
+  parada no PR #15, então quem visita o repositório vê código e README antigos.
+- [ ] Capturas de tela (desktop e celular) no README.
+- [ ] Conta de demonstração (treinador) para recrutadores entrarem no staging.
+- [ ] Descrição e tópicos do repositório no GitHub (hoje: "judo tracker").
+- [ ] Incluir o JudoTracker no site de portfólio.
 
 ## Infra / configuração
 
